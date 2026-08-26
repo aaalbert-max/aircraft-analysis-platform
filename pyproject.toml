@@ -1,0 +1,38 @@
+[project]
+name = "aircraft-analysis-platform"
+version = "0.1.0"
+description = "智能分析平台（飞行器方向）"
+requires-python = ">=3.12"
+dependencies = [
+    "numpy",
+    "pandas",
+    "scipy",
+    "scikit-learn",
+    "pyarrow",
+    "fastapi",
+    "uvicorn[standard]",
+    "pydantic",
+    "matplotlib",
+    "plotly",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-cov",
+    "ruff",
+]
+ml = [
+    "torch",
+]
+
+[project.scripts]
+platform = "platform.serve.cli:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
