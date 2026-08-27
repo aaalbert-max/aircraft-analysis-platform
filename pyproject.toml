@@ -26,9 +26,6 @@ ml = [
     "torch",
 ]
 
-[project.scripts]
-platform = "platform.serve.cli:main"
-
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]

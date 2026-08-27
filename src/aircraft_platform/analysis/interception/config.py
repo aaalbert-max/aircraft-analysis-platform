@@ -11,6 +11,7 @@ class InterceptionConfig:
     """协同围捕场景参数（长度单位统一为米，速度 m/s）。"""
 
     n_pursuers: int = 6
+    dim: int = 2                    # 仿真维度（2 或 3）
     v_evader: float = 10.0          # 目标最大速度 m/s
     rho: float = 0.65               # 速度比 v_pursuer / v_evader
     capture_radius: float = 15.0    # 捕获半径 m

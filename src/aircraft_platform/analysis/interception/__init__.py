@@ -15,6 +15,7 @@
 from .config import CAPTURE, InterceptionConfig, REFERENCE, NOMINAL
 from .simulator import SimResult, simulate_trial
 from .runner import run_single, run_batch, default_sweep_report
+from .solidangle import analyze, min_formation_table
 
 __all__ = [
     "InterceptionConfig",
@@ -24,5 +25,8 @@ __all__ = [
     "SimResult",
     "simulate_trial",
     "run_single",
-    "run_batch",\n    "default_sweep_report",
+    "run_batch",
+    "default_sweep_report",
+    "analyze",
+    "min_formation_table",
 ]

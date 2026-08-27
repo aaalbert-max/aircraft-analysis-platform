@@ -29,7 +29,7 @@
 │   ├── theory/                # 理论核心（待放入）
 │   └── architecture/          # 架构设计文档
 ├── src/
-│   └── platform/
+│   └── aircraft_platform/
 │       ├── ingest/            # 数据接入
 │       ├── governance/        # 数据治理
 │       ├── analysis/          # 分析/算法
