@@ -38,6 +38,8 @@ class InterceptionConfig:
     xmax: float = 250.0
     ymin: float = -150.0
     ymax: float = 150.0
+    zmin: float = -40.0              # 三维竖向下界 m（竖空域高度）
+    zmax: float = 40.0               # 三维竖向上界 m
     init_scale: float = 60.0        # 初始拦截机散布半径 m（正对/侧向分布）
     evader_init: Tuple[float, float] = (0.0, 0.0)  # 目标初始位置
     seed: int = 2000                # 初始分布随机种子

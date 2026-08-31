@@ -25,6 +25,7 @@ def run_sim(payload):
         rho=float(payload.get("rho", 0.65)),
         n_pursuers=int(payload.get("n", 6)),
         seed=int(payload.get("seed", 0)),
+        dim=int(payload.get("dim", 3)),
         scenario="patrol",
     )
     res = simulate_trial(cfg, seed=cfg.seed)
@@ -43,7 +44,7 @@ def run_sim(payload):
         "best_second": res.best_second_distance,
         "min_sep": res.min_sep,
         "arrival_variance": res.arrival_variance,
-        "arena": [cfg.xmin, cfg.xmax, cfg.ymin, cfg.ymax],
+        "arena": [cfg.xmin, cfg.xmax, cfg.ymin, cfg.ymax, cfg.zmin, cfg.zmax],
         "capture_radius": cfg.capture_radius,
         "frames": {"t": [i * cfg.dt * step for i in range(len(evader))],
                    "evader": evader, "pursuers": purs, "dist": dist},

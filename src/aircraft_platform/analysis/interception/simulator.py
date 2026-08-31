@@ -36,6 +36,8 @@ def _initial_positions(cfg: InterceptionConfig, rng: np.random.Generator) -> np.
     n = cfg.n_pursuers
     positions = np.zeros((dim, n))
     base = np.asarray(cfg.evader_init, dtype=float)
+    if base.shape[0] < dim:
+        base = np.concatenate([base, np.zeros(dim - base.shape[0])])
     for i in range(n):
         vec = rng.normal(size=dim)
         vec /= np.linalg.norm(vec) + EPS
@@ -56,7 +58,7 @@ def _patrol_positions(cfg, rng):
         attempts += 1
         cand = np.array([rng.uniform(cfg.xmin, cfg.xmax), rng.uniform(cfg.ymin, cfg.ymax)])
         if dim > 2:
-            extras = [rng.uniform(-cfg.boundary_margin, cfg.boundary_margin) for _ in range(dim - 2)]
+            extras = [rng.uniform(cfg.zmin, cfg.zmax) for _ in range(dim - 2)]
             cand = np.concatenate([cand, extras])
         if placed and np.linalg.norm(positions[:, :placed] - cand[:, None], axis=0).min() < min_gap:
             continue
@@ -70,10 +72,13 @@ def _spawn_scenario(cfg, rng):
     if cfg.scenario == "patrol":
         positions = _patrol_positions(cfg, rng)
         margin = max(cfg.boundary_margin, cfg.capture_radius)
-        evader = np.array(
-            [rng.uniform(cfg.xmin + margin, cfg.xmax - margin),
-             rng.uniform(cfg.ymin + margin, cfg.ymax - margin)]
-        )
+        evader = np.array([
+            rng.uniform(cfg.xmin + margin, cfg.xmax - margin),
+            rng.uniform(cfg.ymin + margin, cfg.ymax - margin),
+        ])
+        if cfg.dim > 2:
+            zmargin = max(cfg.boundary_margin, cfg.capture_radius)
+            evader = np.concatenate([evader, [rng.uniform(cfg.zmin + zmargin, cfg.zmax - zmargin)]])
     else:
         positions = _initial_positions(cfg, rng)
         evader = np.asarray(cfg.evader_init, dtype=float)

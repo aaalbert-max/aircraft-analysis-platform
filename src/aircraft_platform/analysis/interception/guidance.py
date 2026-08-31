@@ -12,27 +12,27 @@ EPS = 1e-8
 def evader_force(positions, evader_pos, cfg: InterceptionConfig) -> np.ndarray:
     """智能逃逸策略：探测距离内拦截机斥力 + 空域软边界斥力。"""
     d = cfg.n_pursuers
-    force = np.zeros(2)
+    dim = evader_pos.shape[0]
+    force = np.zeros(dim)
     for j in range(d):
         away = evader_pos - positions[:, j]
         dist = float(np.linalg.norm(away))
         if dist < cfg.r_detect and dist > EPS:
             force = force + cfg.k_e_rep / (dist**2 + 1.0) * away / dist
-    # 软边界斥力（按边界裕度触发）
-    wall = np.array([
-        evader_pos[0] - cfg.xmin,
-        cfg.xmax - evader_pos[0],
-        evader_pos[1] - cfg.ymin,
-        cfg.ymax - evader_pos[1],
-    ])
-    if wall[0] < cfg.boundary_margin:
-        force[0] += cfg.k_bound / max(wall[0] ** 2, 1.0)
-    elif wall[1] < cfg.boundary_margin:
-        force[0] -= cfg.k_bound / max(wall[1] ** 2, 1.0)
-    if wall[2] < cfg.boundary_margin:
-        force[1] += cfg.k_bound / max(wall[2] ** 2, 1.0)
-    elif wall[3] < cfg.boundary_margin:
-        force[1] -= cfg.k_bound / max(wall[3] ** 2, 1.0)
+    # 软边界斥力（按边界裕度触发），逐个维度泛化
+    bounds = [
+        (cfg.xmin, cfg.xmax),
+        (cfg.ymin, cfg.ymax),
+        (cfg.zmin, cfg.zmax),
+    ]
+    for axis in range(dim):
+        lo, hi = bounds[axis]
+        d_lo = evader_pos[axis] - lo
+        d_hi = hi - evader_pos[axis]
+        if d_lo < cfg.boundary_margin:
+            force[axis] += cfg.k_bound / max(d_lo**2, 1.0)
+        elif d_hi < cfg.boundary_margin:
+            force[axis] -= cfg.k_bound / max(d_hi**2, 1.0)
     return force
 
 
@@ -78,7 +78,7 @@ def pursuer_force(
         w_rep = cfg.w_rep_herder
 
     f_att = cfg.k_att * (aim - positions[:, i])
-    f_rep = np.zeros(2)
+    f_rep = np.zeros(positions.shape[0])
     for j in range(cfg.n_pursuers):
         if j == i:
             continue
