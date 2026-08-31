@@ -129,6 +129,13 @@ def simulate_trial(cfg: InterceptionConfig, seed: Optional[int] = None) -> SimRe
 
     alpha = min(1.0, cfg.dt / cfg.tau)
 
+    # 记录初始帧（t=0 的布局），使可视化首帧与初始布局一致
+    pursuer_traj.append(positions[:, :n_p].copy())
+    evader_traj.append(positions[:, n_p].copy())
+    dist_history.append(np.linalg.norm(
+        positions[:, :n_p] - positions[:, n_p][:, None], axis=0
+    ))
+
     for k in range(1, max_steps + 1):
         evader_pos = positions[:, n_p].copy()
 

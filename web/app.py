@@ -51,6 +51,35 @@ def run_sim(payload):
     }
 
 
+def get_layout(payload):
+    """仅生成初始布局（拦截机/目标位置），不跑全程，用于秒开预览。"""
+    import numpy as np
+
+    from aircraft_platform.analysis.interception.config import InterceptionConfig
+    from aircraft_platform.analysis.interception.simulator import _spawn_scenario
+
+    cfg = InterceptionConfig(
+        rho=float(payload.get("rho", 0.65)),
+        n_pursuers=int(payload.get("n", 6)),
+        seed=int(payload.get("seed", 0)),
+        dim=int(payload.get("dim", 3)),
+        scenario="patrol",
+    )
+    rng = np.random.default_rng(cfg.seed)
+    purs, evader, heading = _spawn_scenario(cfg, rng)
+    return {
+        "rho": cfg.rho,
+        "n": cfg.n_pursuers,
+        "seed": cfg.seed,
+        "dim": cfg.dim,
+        "heading": float(heading),
+        "arena": [cfg.xmin, cfg.xmax, cfg.ymin, cfg.ymax, cfg.zmin, cfg.zmax],
+        "capture_radius": cfg.capture_radius,
+        "pursuers_init": np.asarray(purs).T.tolist(),
+        "evader_init": np.asarray(evader).tolist(),
+    }
+
+
 class Handler(BaseHTTPRequestHandler):
     def _send(self, code, body, ctype="application/json; charset=utf-8"):
         self.send_response(code)
@@ -69,6 +98,12 @@ class Handler(BaseHTTPRequestHandler):
             payload["solid_angle"] = min_formation_table(
                 [0.45, 0.55, 0.65, 0.75, 0.85], r_cap=15.0, distance=80.0, eta=0.8
             )
+            payload["recommendation"] = DESIGN.get("optimum", {})
+            payload["criteria"] = {
+                "target_success": 0.85,
+                "t_window": 60.0,
+                "hard_safe": 10.0,
+            }
             self._send(200, json.dumps(payload, ensure_ascii=False).encode("utf-8"))
         else:
             self._send(404, b'{"error":"not found"}')
@@ -81,6 +116,13 @@ class Handler(BaseHTTPRequestHandler):
                 payload = json.loads(self.rfile.read(length) or b"{}")
                 data = run_sim(payload)
                 self._send(200, json.dumps(data, ensure_ascii=False).encode("utf-8"))
+            except Exception as exc:  # noqa: BLE001
+                self._send(500, json.dumps({"error": str(exc)}, ensure_ascii=False).encode("utf-8"))
+        elif path == "/api/layout":
+            length = int(self.headers.get("Content-Length", 0))
+            try:
+                payload = json.loads(self.rfile.read(length) or b"{}")
+                self._send(200, json.dumps(get_layout(payload), ensure_ascii=False).encode("utf-8"))
             except Exception as exc:  # noqa: BLE001
                 self._send(500, json.dumps({"error": str(exc)}, ensure_ascii=False).encode("utf-8"))
         else:

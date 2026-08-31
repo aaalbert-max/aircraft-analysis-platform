@@ -30,6 +30,10 @@
   .tag{display:inline-block;padding:2px 8px;border-radius:6px;font-size:12px;margin-top:6px}
   .tag.ok{background:rgba(34,197,94,.15);color:#4ade80}
   .tag.no{background:rgba(239,68,68,.15);color:#f87171}
+  .advice{font-size:13px;line-height:1.9}
+  .advice .line{padding:4px 0;border-bottom:1px solid var(--line)}
+  .advice b{color:var(--acc)}
+  .advice .hint{color:var(--muted);font-size:12px;margin-top:7px}
 </style>
 </head>
 <body>
@@ -54,6 +58,7 @@
   <div class="main">
     <div class="card"><h3>协同围捕过程（三维/俯视，绿圈=捕获半径，红点=目标，蓝点=拦截机；拖动旋转、滚轮缩放）</h3>
       <canvas id="anim"></canvas></div>
+    <div class="card"><h3>工程设计建议（面向发榜单位）</h3><div id="advice" class="advice"></div></div>
     <div class="row">
       <div class="card"><h3>捕获成功率 - 速度比（当前 n）</h3><canvas class="ch" id="ch-succ"></canvas></div>
       <div class="card"><h3>三维覆盖最小编队 - 速度比</h3><canvas class="ch" id="ch-min"></canvas></div>
@@ -63,7 +68,7 @@
 
 <script>
 const $=id=>document.getElementById(id);
-let state={rho:0.65,n:6,seed:1234,frames:null,metrics:null,idx:0,playing:false,speed:1,timer:null,design:null};
+let state={rho:0.65,n:6,seed:1234,frames:null,metrics:null,idx:0,playing:false,speed:1,timer:null,design:null,showLayout:false,layout:null};
 
 function setVals(){
   $("v-rho").textContent=(+$("rho").value).toFixed(2);
@@ -71,8 +76,24 @@ function setVals(){
   $("v-seed").textContent=$("seed").value;
   state.rho=+$("rho").value; state.n=+$("n").value; state.seed=+$("seed").value;
   drawSucc();
+  scheduleLayout();
 }
 ["rho","n","seed"].forEach(id=>$(id).addEventListener("input",setVals));
+
+let layoutTimer=null;
+function scheduleLayout(){ if(layoutTimer)clearTimeout(layoutTimer); layoutTimer=setTimeout(loadLayout,70); }
+async function loadLayout(){
+  try{
+    const r=await fetch("/api/layout",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({rho:state.rho,n:state.n,seed:state.seed,dim:3})});
+    const d=await r.json();
+    state.layout={arena:d.arena,capture_radius:d.capture_radius,seed:d.seed,
+      frame:{t:[0],evader:[d.evader_init],pursuers:[d.pursuers_init]}};
+    state.showLayout=true;
+    if(state.timer){clearInterval(state.timer);state.timer=null;state.playing=false;$("play").textContent="▶ 播放";}
+    drawAnim();
+  }catch(e){}
+}
 
 async function run(){
   $("run").disabled=true;
@@ -80,7 +101,7 @@ async function run(){
     const r=await fetch("/api/simulate",{method:"POST",headers:{"Content-Type":"application/json"},
       body:JSON.stringify({rho:state.rho,n:state.n,seed:state.seed})});
     const d=await r.json();
-    state.frames=d.frames; state.metrics=d; state.idx=0;
+    state.frames=d.frames; state.metrics=d; state.idx=0; state.showLayout=false;
     drawMetrics(); startAnim();
   }catch(e){$("metrics").textContent="错误："+e;}
   $("run").disabled=false;
@@ -118,10 +139,17 @@ function centerA(a){const n=a.length/2,c=[];for(let k=0;k<n;k++)c.push((a[2*k]+a
 function rot3(p,c,ry,rx){const x=p[0]-c[0],y=p[1]-c[1],z=p[2]-c[2];const cy=Math.cos(ry),sy=Math.sin(ry),cx=Math.cos(rx),sx=Math.sin(rx);let X=x*cy+z*sy,Z=-x*sy+z*cy,Y=y;let Y2=Y*cx-Z*sx,Z2=Y*sx+Z*cx;return [X,Y2,Z2];}
 function drawAnim(){
   const c=$("anim"),ctx=c.getContext("2d");const dpr=window.devicePixelRatio||1;const w=c.clientWidth,h=c.clientHeight;c.width=w*dpr;c.height=h*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);
+  if(state.showLayout && state.layout){
+    const m={arena:state.layout.arena,capture_radius:state.layout.capture_radius};
+    const f=state.layout.frame;
+    if(view3d && m.arena.length>=6){drawAnim3d(ctx,w,h,m,f,0,true);}
+    else{state.idx=0;drawAnim2d();}
+    return;
+  }
   const m=state.metrics,f=state.frames;if(!f)return;
-  if(view3d && m.arena.length>=6){drawAnim3d(ctx,w,h,m,f,state.idx);}else{drawAnim2d();}
+  if(view3d && m.arena.length>=6){drawAnim3d(ctx,w,h,m,f,state.idx,false);}else{drawAnim2d();}
 }
-function drawAnim3d(ctx,w,h,m,f,idx){
+function drawAnim3d(ctx,w,h,m,f,idx,layoutMode){
   if(autoRot && !dragging) rotY+=0.002;
   const a=m.arena, xmin=a[0],xmax=a[1],ymin=a[2],ymax=a[3],zmin=a[4],zmax=a[5], c=centerA(a);
   const corners=[[xmin,ymin,zmin],[xmax,ymin,zmin],[xmax,ymax,zmin],[xmin,ymax,zmin],[xmin,ymin,zmax],[xmax,ymin,zmax],[xmax,ymax,zmax],[xmin,ymax,zmax]];
@@ -140,8 +168,9 @@ function drawAnim3d(ctx,w,h,m,f,idx){
   ctx.setLineDash([]);
   const eq=proj(ec);ctx.beginPath();ctx.arc(eq[0],eq[1],6,0,7);ctx.fillStyle="#ef4444";ctx.fill();ctx.strokeStyle="#fff";ctx.lineWidth=1.5;ctx.stroke();
   for(let j=0;j<n;j++){const q=proj(f.pursuers[idx][j]);ctx.beginPath();ctx.arc(q[0],q[1],4.5,0,7);ctx.fillStyle="#38bdf8";ctx.fill();ctx.strokeStyle="#0b1220";ctx.stroke();}
-  ctx.fillStyle="#94a3b8";ctx.font="12px sans-serif";ctx.fillText("t = "+f.t[idx].toFixed(1)+" s",12,h-12);
-  ctx.fillText("三维视角（拖动旋转 / 滚轮缩放）",12,20);
+  ctx.fillStyle="#94a3b8";ctx.font="12px sans-serif";
+  if(layoutMode){ctx.fillText("初始布局 · 随机种子 = "+state.layout.seed+"（拖动旋转/滚轮缩放）",12,20);}
+  else{ctx.fillText("t = "+f.t[idx].toFixed(1)+" s",12,h-12);ctx.fillText("三维视角（拖动旋转 / 滚轮缩放）",12,20);}
 }
 function drawAnim2d(){
   const c=$("anim"),ctx=c.getContext("2d"); const dpr=window.devicePixelRatio||1;
@@ -182,7 +211,21 @@ function drawAnim2d(){
 
 async function loadDesign(){
   try{const r=await fetch("/api/design"); state.design=await r.json();}catch(e){}
-  drawSucc(); drawMin();
+  drawSucc(); drawMin(); drawAdvice();
+}
+function drawAdvice(){
+  const el=$("advice"); const d=state.design; if(!d){el.innerHTML="运行设计研究后生成";return;}
+  const rec=d.recommendation||{}, cr=d.criteria||{};
+  const rows=(d.records||[]);
+  const base=rows.filter(r=>Math.abs(r.rho-0.65)<0.003 && r.n_pursuers===6)[0];
+  let h=`<div class="line"><b>推荐设计</b>：速度比 ρ≈${rec.rho!=null?rec.rho.toFixed(2):"-"}，拦截机数 n≈${rec.n!=null?rec.n:"-"}</div>`;
+  h+=`<div class="line">预测 <b>${rec.pred_success!=null?(rec.pred_success*100).toFixed(1):"-"}%</b> 成功率 ｜ 捕获时间 ${rec.pred_time!=null?rec.pred_time.toFixed(0):"-"}s ｜ 最小机间距 ${rec.pred_minsep!=null?rec.pred_minsep.toFixed(1):"-"}m</div>`;
+  h+=`<div class="line">判据：成功率≥${(cr.target_success||0.85)*100}%、捕获时间≤${cr.t_window||60}s、最小机间距≥${cr.hard_safe||10}m（可行域 ${rec.feasible_frac!=null?(rec.feasible_frac*100).toFixed(0):"-"}%）</div>`;
+  const sa=(d.solid_angle||[]).find(r=>Math.abs(r.rho-0.65)<0.003);
+  if(sa) h+=`<div class="line">三维覆盖最小编队：ρ=0.65 时 理想 ${sa.n_ideal} 架 ／ η=0.8 需 ${sa.n_eta} 架</div>`;
+  if(base) h+=`<div class="line">实测（ρ=0.65, n=6）：成功率 ${(base.success_rate*100).toFixed(0)}%，平均捕获 ${base.mean_capture_time.toFixed(0)}s，平均最小机间距 ${base.mean_min_sep.toFixed(1)}m</div>`;
+  h+=`<div class="hint">提示：引导层人工势场本身不保证 ≥10m 硬安全，实际系统需叠加执行层安全屏障。</div>`;
+  el.innerHTML=h;
 }
 function drawSucc(){
   const c=$("ch-succ"),ctx=c.getContext("2d");const dpr=window.devicePixelRatio||1;
