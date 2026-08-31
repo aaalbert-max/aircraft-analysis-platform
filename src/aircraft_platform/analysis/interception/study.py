@@ -141,3 +141,112 @@ def optimize_on_surrogate(
     n_star = float(pts[best, 1])
     n_star_int = int(round(min(max(n_star, n_bounds[0]), n_max)))
     return rho_star, n_star_int, float(pred[best])
+
+
+def fit_surrogates(records):
+    """对 success_rate / mean_capture_time / mean_min_sep 各训练一个代理模型。
+
+    使用随机森林以稳健处理含噪声的 0-1 成功率；每个输出单独训练并丢弃该输出的
+    NaN 样本，返回 {key: model}。
+    """
+    from sklearn.ensemble import RandomForestRegressor
+    from sklearn.pipeline import Pipeline
+    from sklearn.preprocessing import StandardScaler
+
+    X = np.array([r.features for r in records], dtype=float)
+    models = {}
+    for key in ("success_rate", "mean_capture_time", "mean_min_sep"):
+        y = np.array([getattr(r, key) for r in records], dtype=float)
+        mask = np.isfinite(y)
+        Xm, ym = X[mask], y[mask]
+        pipe = Pipeline([
+            ("scaler", StandardScaler()),
+            ("rf", RandomForestRegressor(n_estimators=300, random_state=0)),
+        ])
+        if len(ym) >= 3:
+            pipe.fit(Xm, ym)
+        models[key] = pipe
+    return models
+
+
+def surrogate_predict(model, pts):
+    """对代理模型预测，返回一维数组。"""
+    return np.asarray(model.predict(pts), dtype=float).ravel()
+
+
+def constrained_optimize(
+    records,
+    t_window: float = 60.0,
+    hard_safe: float = 10.0,
+    grid: int = 60,
+    rho_bounds: Tuple[float, float] = (0.4, 0.9),
+    n_bounds: Tuple[float, float] = (3, 11),
+):
+    """约束寻优：在代理模型上最大化成功率，约束 捕获时间<=t_window 且 最小机间距>=hard_safe。
+
+    返回 (rho_star, n_star, pred_success, pred_time, pred_minsep, feasible_frac)。
+    """
+    models = fit_surrogates(records)
+    rhos = np.linspace(rho_bounds[0], rho_bounds[1], grid)
+    ns = np.linspace(n_bounds[0], n_bounds[1], grid)
+    xx, yy = np.meshgrid(rhos, ns)
+    pts = np.column_stack([xx.ravel(), yy.ravel()])
+    succ = np.clip(surrogate_predict(models["success_rate"], pts), 0, 1)
+    time_p = surrogate_predict(models["mean_capture_time"], pts)
+    minsep_p = surrogate_predict(models["mean_min_sep"], pts)
+    feasible = (time_p <= t_window) & (minsep_p >= hard_safe)
+    feasible_frac = float(np.mean(feasible))
+    if not np.any(feasible):
+        best = int(np.argmax(succ))
+    else:
+        masked = np.where(feasible, succ, -1.0)
+        best = int(np.argmax(masked))
+    return (
+        float(pts[best, 0]),
+        int(round(pts[best, 1])),
+        float(succ[best]),
+        float(time_p[best]),
+        float(minsep_p[best]),
+        feasible_frac,
+    )
+
+
+def min_formation_for_success(
+    records,
+    target_success: float = 0.85,
+    t_window: float = 60.0,
+    hard_safe: float = 10.0,
+    grid: int = 80,
+    rho_bounds: Tuple[float, float] = (0.4, 0.9),
+    n_bounds: Tuple[float, float] = (3, 11),
+    rho_points: Sequence[float] = (0.45, 0.55, 0.65, 0.75, 0.85),
+):
+    """求满足 成功率>=target_success 且 时间<=t_window 且 机间距>=hard_safe 的最小编队 n(ρ)。
+
+    rho_points 为要输出的候选速度比（默认取设计采样点）；返回 (rows, overall)。
+    """
+    models = fit_surrogates(records)
+    rhos = np.linspace(rho_bounds[0], rho_bounds[1], grid)
+    ns = np.linspace(n_bounds[0], n_bounds[1], grid)
+    xx, yy = np.meshgrid(rhos, ns)
+    pts = np.column_stack([xx.ravel(), yy.ravel()])
+    succ = np.clip(surrogate_predict(models["success_rate"], pts), 0, 1).reshape(xx.shape)
+    timep = surrogate_predict(models["mean_capture_time"], pts).reshape(xx.shape)
+    minsepp = surrogate_predict(models["mean_min_sep"], pts).reshape(xx.shape)
+    feasible = (timep <= t_window) & (minsepp >= hard_safe)
+
+    def n_at(rho):
+        k = int(np.argmin(np.abs(rhos - rho)))
+        for j in range(len(ns)):
+            if feasible[j, k] and succ[j, k] >= target_success:
+                return float(ns[j]), float(succ[j, k])
+        return float("nan"), float("nan")
+
+    rows = []
+    overall = None
+    for rho in list(rho_points):
+        n_req, s_req = n_at(rho)
+        rows.append({"rho": float(rho), "n_required": n_req, "pred_success": s_req})
+        if np.isfinite(n_req) and (overall is None or n_req < overall[1]):
+            overall = (float(rho), float(n_req), float(s_req))
+    return rows, overall

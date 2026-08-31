@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>智能协同反制分析平台</title>
+<style>
+  :root{--bg:#0f172a;--panel:#1e293b;--line:#334155;--txt:#e2e8f0;--muted:#94a3b8;--acc:#38bdf8;--red:#ef4444;}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Microsoft YaHei",system-ui,sans-serif;background:var(--bg);color:var(--txt);}
+  header{padding:14px 22px;background:var(--panel);border-bottom:1px solid var(--line);}
+  header h1{font-size:19px;margin:0;font-weight:600}
+  header small{color:var(--muted)}
+  .wrap{display:grid;grid-template-columns:300px 1fr;gap:14px;padding:16px;max-width:1500px;margin:0 auto}
+  .side{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;height:fit-content}
+  .side label{display:block;color:var(--muted);font-size:13px;margin-bottom:4px}
+  .side .val{color:var(--acc);font-weight:600}
+  input[type=range]{width:100%}
+  button{background:var(--acc);border:none;color:#04121f;font-weight:600;border-radius:8px;padding:10px 14px;cursor:pointer;font-size:14px;margin-top:10px;width:100%}
+  button.ghost{background:transparent;border:1px solid var(--line);color:var(--txt);margin-top:6px}
+  .metrics{margin-top:14px;font-size:13px;line-height:1.9}
+  .metrics b{color:var(--acc)}
+  .main{display:flex;flex-direction:column;gap:14px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px}
+  .card h3{margin:0 0 8px;font-size:14px;color:var(--muted);font-weight:500}
+  #anim{width:100%;height:460px;background:#0b1220;border-radius:8px;display:block}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  canvas.ch{width:100%;height:220px;background:#0b1220;border-radius:8px}
+  .legend{font-size:12px;color:var(--muted);margin-top:6px}
+  .tag{display:inline-block;padding:2px 8px;border-radius:6px;font-size:12px;margin-top:6px}
+  .tag.ok{background:rgba(34,197,94,.15);color:#4ade80}
+  .tag.no{background:rgba(239,68,68,.15);color:#f87171}
+</style>
+</head>
+<body>
+<header>
+  <h1>智能协同反制分析平台 <small>· 基于三维覆盖立体角的多拦截机协同围捕</small></h1>
+</header>
+<div class="wrap">
+  <div class="side">
+    <label>速度比 ρ: <span class="val" id="v-rho">0.65</span></label>
+    <input type="range" id="rho" min="0.40" max="0.90" step="0.01" value="0.65">
+    <label style="margin-top:10px">拦截机数量 n: <span class="val" id="v-n">6</span></label>
+    <input type="range" id="n" min="3" max="10" step="1" value="6">
+    <label style="margin-top:10px">随机种子: <span class="val" id="v-seed">1234</span></label>
+    <input type="range" id="seed" min="0" max="9999" step="1" value="1234">
+    <button id="run">▶ 运行仿真</button>
+    <button class="ghost" id="play">⏸ 暂停 / 播放</button>
+    <div class="metrics" id="metrics">请先运行一次仿真。</div>
+    <div id="tag"></div>
+  </div>
+  <div class="main">
+    <div class="card"><h3>协同围捕过程（俯视图，绿圈=捕获半径15m，红点=目标，蓝点=拦截机）</h3>
+      <canvas id="anim"></canvas></div>
+    <div class="row">
+      <div class="card"><h3>捕获成功率 - 速度比（当前 n）</h3><canvas class="ch" id="ch-succ"></canvas></div>
+      <div class="card"><h3>三维覆盖最小编队 - 速度比</h3><canvas class="ch" id="ch-min"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+let state={rho:0.65,n:6,seed:1234,frames:null,metrics:null,idx:0,playing:false,speed:1,timer:null,design:null};
+
+function setVals(){
+  $("v-rho").textContent=(+$("rho").value).toFixed(2);
+  $("v-n").textContent=$("n").value;
+  $("v-seed").textContent=$("seed").value;
+  state.rho=+$("rho").value; state.n=+$("n").value; state.seed=+$("seed").value;
+  drawSucc();
+}
+["rho","n","seed"].forEach(id=>$(id).addEventListener("input",setVals));
+
+async function run(){
+  $("run").disabled=true;
+  try{
+    const r=await fetch("/api/simulate",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({rho:state.rho,n:state.n,seed:state.seed})});
+    const d=await r.json();
+    state.frames=d.frames; state.metrics=d; state.idx=0;
+    drawMetrics(); startAnim();
+  }catch(e){$("metrics").textContent="错误："+e;}
+  $("run").disabled=false;
+}
+$("run").addEventListener("click",run);
+
+function drawMetrics(){
+  const m=state.metrics; if(!m)return;
+  const t=m.capture_time==null?"未捕获":m.capture_time.toFixed(1)+" s";
+  $("metrics").innerHTML=`捕获：<b>${m.captured?"成功":"失败"}</b>｜捕获时间 <b>${t}</b><br>
+    第二近距 <b>${m.best_second.toFixed(2)} m</b>｜机间最小间距 <b>${m.min_sep.toFixed(2)} m</b><br>
+    到达序时方差 <b>${m.arrival_variance==null?"-":m.arrival_variance.toFixed(3)}</b>`;
+  $("tag").innerHTML=`<span class="tag ${m.captured?"ok":"no"}">${m.captured?"围捕成功":"围捕超时/失败"}</span>`;
+}
+
+function startAnim(){
+  if(state.timer)clearInterval(state.timer);
+  state.playing=true; $("play").textContent="⏸ 暂停 / 播放";
+  state.timer=setInterval(()=>{ state.idx+=state.speed; if(state.idx>=state.frames.t.length-1){state.idx=state.frames.t.length-1; state.playing=false; $("play").textContent="▶ 播放"; clearInterval(state.timer);} drawAnim(); },30);
+}
+$("play").addEventListener("click",()=>{
+  if(!state.frames)return;
+  if(state.playing){state.playing=false;clearInterval(state.timer);$("play").textContent="▶ 播放";}
+  else{ if(state.idx>=state.frames.t.length-1)state.idx=0; startAnim(); }
+});
+
+function mapPt(x,y,a,w,h,pad){
+  const [xmin,xmax,ymin,ymax]=a;
+  const sx=pad+(x-xmin)/(xmax-xmin)*(w-2*pad);
+  const sy=h-pad-(y-ymin)/(ymax-ymin)*(h-2*pad);
+  return [sx,sy];
+}
+function drawAnim(){
+  const c=$("anim"),ctx=c.getContext("2d"); const dpr=window.devicePixelRatio||1;
+  const w=c.clientWidth,h=c.clientHeight; c.width=w*dpr;c.height=h*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,w,h);
+  const m=state.metrics,f=state.frames; if(!f)return;
+  const [xmin,xmax,ymin,ymax]=m.arena; const pad=Math.min(w,h)*0.08;
+  // 边界
+  ctx.strokeStyle="#334155"; ctx.lineWidth=1;
+  const p0=mapPt(xmin,ymin,m.arena,w,h,pad),p1=mapPt(xmax,ymax,m.arena,w,h,pad);
+  ctx.strokeRect(p0[0],p0[1],p1[0]-p0[0],p1[1]-p0[1]);
+  const idx=state.idx, n=f.pursuers[0].length;
+  // 轨迹
+  for(let j=0;j<n;j++){
+    ctx.beginPath();ctx.strokeStyle="rgba(56,189,248,.55)";ctx.lineWidth=1.4;
+    for(let i=0;i<=idx;i++){const [px,py]=mapPt(f.pursuers[i][j][0],f.pursuers[i][j][1],m.arena,w,h,pad);i?ctx.lineTo(px,py):ctx.moveTo(px,py);}
+    ctx.stroke();
+  }
+  // 目标轨迹
+  ctx.beginPath();ctx.strokeStyle="rgba(239,68,68,.7)";ctx.lineWidth=1.8;
+  for(let i=0;i<=idx;i++){const [ex,ey]=mapPt(f.evader[i][0],f.evader[i][1],m.arena,w,h,pad);i?ctx.lineTo(ex,ey):ctx.moveTo(ex,ey);}
+  ctx.stroke();
+  // 捕获半径圈（围绕当前目标）
+  const [ex,ey]=mapPt(f.evader[idx][0],f.evader[idx][1],m.arena,w,h,pad);
+  const rpx=(m.capture_radius)/(xmax-xmin)*(w-2*pad);
+  ctx.beginPath();ctx.arc(ex,ey,rpx,0,7);ctx.strokeStyle="#a3e635";ctx.setLineDash([4,3]);ctx.stroke();ctx.setLineDash([]);
+  // 目标
+  ctx.beginPath();ctx.arc(ex,ey,6,0,7);ctx.fillStyle="#ef4444";ctx.fill();ctx.strokeStyle="#fff";ctx.lineWidth=1.5;ctx.stroke();
+  // 拦截机
+  for(let j=0;j<n;j++){
+    const [px,py]=mapPt(f.pursuers[idx][j][0],f.pursuers[idx][j][1],m.arena,w,h,pad);
+    ctx.beginPath();ctx.arc(px,py,4.5,0,7);ctx.fillStyle="#38bdf8";ctx.fill();ctx.strokeStyle="#0b1220";ctx.stroke();
+  }
+  // 时间
+  ctx.fillStyle="#94a3b8";ctx.font="12px sans-serif";
+  ctx.fillText("t = "+f.t[idx].toFixed(1)+" s", 12, h-12);
+}
+
+async function loadDesign(){
+  try{const r=await fetch("/api/design"); state.design=await r.json();}catch(e){}
+  drawSucc(); drawMin();
+}
+function drawSucc(){
+  const c=$("ch-succ"),ctx=c.getContext("2d");const dpr=window.devicePixelRatio||1;
+  const w=c.clientWidth,h=c.clientHeight;c.width=w*dpr;c.height=h*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);
+  const pad=36;ctx.strokeStyle="#334155";ctx.font="11px sans-serif";ctx.fillStyle="#94a3b8";
+  ctx.strokeRect(pad,pad,w-2*pad,h-2*pad);
+  // axes
+  for(let s=0;s<=1;s+=0.25){ctx.fillText((s*100).toFixed(0)+"%",4,h-pad-s*(h-2*pad));ctx.beginPath();ctx.moveTo(pad,h-pad-s*(h-2*pad));ctx.lineTo(w-pad,h-pad-s*(h-2*pad));ctx.stroke();}
+  ctx.fillText("0.4",pad,h-2);ctx.fillText("0.85",w-pad-24,h-2);
+  const recs=(state.design&&state.design.records||[]).filter(r=>r.n_pursuers===state.n);
+  recs.sort((a,b)=>a.rho-b.rho);
+  ctx.beginPath();ctx.strokeStyle="#38bdf8";ctx.lineWidth=2;
+  recs.forEach((r,i)=>{const px=pad+(r.rho-0.4)/(0.85-0.4)*(w-2*pad);const py=h-pad-r.success_rate*(h-2*pad);i?ctx.lineTo(px,py):ctx.moveTo(px,py);});
+  ctx.stroke();
+  recs.forEach(r=>{const px=pad+(r.rho-0.4)/(0.85-0.4)*(w-2*pad);const py=h-pad-r.success_rate*(h-2*pad);ctx.beginPath();ctx.arc(px,py,3,0,7);ctx.fillStyle="#e2e8f0";ctx.fill();});
+  // current rho marker
+  const cx=pad+(state.rho-0.4)/(0.85-0.4)*(w-2*pad);
+  ctx.beginPath();ctx.moveTo(cx,h-pad);ctx.lineTo(cx,pad);ctx.strokeStyle="#f59e0b";ctx.setLineDash([3,3]);ctx.stroke();ctx.setLineDash([]);
+}
+function drawMin(){
+  const c=$("ch-min"),ctx=c.getContext("2d");const dpr=window.devicePixelRatio||1;
+  const w=c.clientWidth,h=c.clientHeight;c.width=w*dpr;c.height=h*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);
+  const pad=36;ctx.strokeStyle="#334155";ctx.font="11px sans-serif";ctx.fillStyle="#94a3b8";ctx.strokeRect(pad,pad,w-2*pad,h-2*pad);
+  const sa=(state.design&&state.design.solid_angle)||[];
+  const xmax=0.9,xmin=0.4,ymax=14,ymin=3;
+  for(let s=ymin;s<=ymax;s+=2){ctx.fillText(s,4,h-pad-(s-ymin)/(ymax-ymin)*(h-2*pad));ctx.beginPath();ctx.moveTo(pad,h-pad-(s-ymin)/(ymax-ymin)*(h-2*pad));ctx.lineTo(w-pad,h-pad-(s-ymin)/(ymax-ymin)*(h-2*pad));ctx.stroke();}
+  if(sa.length){
+    const plot=(key,col)=>{ctx.beginPath();ctx.strokeStyle=col;ctx.lineWidth=2;sa.forEach((r,i)=>{const px=pad+(r.rho-xmin)/(xmax-xmin)*(w-2*pad);const py=h-pad-(r.n-ymin)/(ymax-ymin)*(h-2*pad);i?ctx.lineTo(px,py):ctx.moveTo(px,py);});ctx.stroke();
+    sa.forEach(r=>{const px=pad+(r.rho-xmin)/(xmax-xmin)*(w-2*pad);const py=h-pad-(r.n-ymin)/(ymax-ymin)*(h-2*pad);ctx.beginPath();ctx.arc(px,py,2.5,0,7);ctx.fillStyle=col;ctx.fill();});};
+    plot("n_ideal","#38bdf8");plot("n_eta","#f59e0b");
+  }
+  ctx.fillStyle="#94a3b8";ctx.fillText("理想(蓝) / η=0.8(橙)",pad+6,pad+12);
+}
+setVals();loadDesign();
+</script>
+</body>
+</html>

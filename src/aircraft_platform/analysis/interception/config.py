@@ -12,12 +12,14 @@ class InterceptionConfig:
 
     n_pursuers: int = 6
     dim: int = 2                    # 仿真维度（2 或 3）
+    scenario: str = "patrol"        # patrol(作战空域巡逻) | ring(目标周围环形)
     v_evader: float = 10.0          # 目标最大速度 m/s
     rho: float = 0.65               # 速度比 v_pursuer / v_evader
     capture_radius: float = 15.0    # 捕获半径 m
     required_captors: int = 2       # 判定围捕成功所需同时进入的拦截机数
     r_detect: float = 80.0          # 探测/威胁感知距离 m
     d_safe: float = 50.0            # 机间软斥力启用距离 m
+    hard_safe: float = 10.0         # 执行层最小安全距离 m（安全屏障兜底）
     boundary_margin: float = 30.0   # 空域软边界裕度 m
     k_e_rep: float = 500.0          # 逃逸机对拦截机斥力增益
     k_bound: float = 200.0          # 逃逸机边界斥力增益

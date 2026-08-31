@@ -69,3 +69,33 @@
 
 请重点说明：数据来源与格式、分析对象（气动/结构/控制/轨迹/遥测等）、是否需实时处理、
 部署形态（单机/局域网/云端）、主要用户角色与权限。这些决定架构收敛方向。
+
+
+## 平台使用
+
+依赖：Python 3.12 + numpy / scipy / scikit-learn / matplotlib / pyarrow。
+
+```powershell
+pip install scipy scikit-learn matplotlib pyarrow
+```
+
+### 1. 设计研究（扫描 -> 代理模型 -> 最小编队寻优 -> 报告图）
+```powershell
+$env:PYTHONPATH='src'
+python scripts/run_design_study.py
+# 结果输出到 data/outputs/design_study/（图 + 指标 + 工程结论）
+```
+
+### 2. 可交互 Web 演示
+```powershell
+$env:PYTHONPATH='src'
+python web/app.py
+# 浏览器打开 http://127.0.0.1:8000
+# 可拖速度比/拦截机数/种子，实时看协同围捕动画与成功率曲线
+```
+
+### 核心模块
+- `src/aircraft_platform/analysis/interception/solidangle.py` 三维覆盖立体角 -> 最小编队
+- `.../simulator.py` 协同围捕仿真引擎（巡逻场景 + 执行层安全屏障）
+- `.../study.py` 设计空间采样、代理模型、约束寻优
+- `.../report.py` 设计研究图与工程结论

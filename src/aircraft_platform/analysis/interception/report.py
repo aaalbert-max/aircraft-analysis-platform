@@ -14,6 +14,9 @@ from .solidangle import analyze, min_formation_table
 from .study import (
     DesignRecord,
     fit_surrogate,
+    fit_surrogates,
+    surrogate_predict,
+    constrained_optimize,
     optimize_on_surrogate,
     split_train_test,
     surrogate_r2,
@@ -136,6 +139,40 @@ def plot_surrogate_fit(plt, records, out_path: Path):
     plt.close(fig)
 
 
+def plot_design_envelope(plt, models, records, rhos, ns, t_window, hard_safe, out_path):
+    """图0：设计空间包络——成功率云图 + 时间/安全约束等值线 + 立体角最小编队 + 约束最优解。"""
+    xa = np.linspace(rhos[0], rhos[-1], 80)
+    na = np.linspace(ns[0], ns[-1], 80)
+    xx, yy = np.meshgrid(xa, na)
+    pts = np.column_stack([xx.ravel(), yy.ravel()])
+    succ = np.clip(surrogate_predict(models["success_rate"], pts), 0, 1).reshape(xx.shape)
+    timep = surrogate_predict(models["mean_capture_time"], pts).reshape(xx.shape)
+    minsepp = surrogate_predict(models["mean_min_sep"], pts).reshape(xx.shape)
+    feasible = (timep <= t_window) & (minsepp >= hard_safe)
+    fig, ax = plt.subplots(figsize=(8.5, 5.8))
+    cs = ax.contourf(xx, yy, succ, levels=np.linspace(0, 1, 21), cmap="viridis", alpha=0.9)
+    ax.contour(xx, yy, timep, levels=[t_window], colors="tab:blue", linewidths=1.6)
+    ax.contour(xx, yy, minsepp, levels=[hard_safe], colors="tab:orange", linewidths=1.6)
+    ax.contourf(xx, yy, feasible.astype(float), levels=[0.5, 1.5], colors="none", hatches=["//"])
+    for r in records:
+        ax.scatter(r.rho, r.n_pursuers, c=[r.success_rate], cmap="viridis",
+                   vmin=0, vmax=1, s=42, edgecolor="k", zorder=5)
+    sa_rhos = np.linspace(rhos[0], rhos[-1], 40)
+    sa_n = [min_formation_table([rho], r_cap=15.0, distance=80.0, eta=0.8)[0]["n_eta"] for rho in sa_rhos]
+    ax.plot(sa_rhos, sa_n, "r--", lw=2, label="三维覆盖最小编队 (eta=0.8)")
+    opt = constrained_optimize(records, t_window=t_window, hard_safe=hard_safe)
+    ax.plot([opt[0]], [opt[1]], "r*", ms=18, mec="k", label="约束最优设计")
+    fig.colorbar(cs, ax=ax, label="捕获成功率")
+    ax.set_xlabel("速度比 rho")
+    ax.set_ylabel("拦截机数量 n")
+    ax.set_title("设计空间包络：成功率 / 时间·安全约束 / 最小编队")
+    ax.legend(loc="lower right")
+    ax.grid(alpha=0.25)
+    fig.tight_layout()
+    fig.savefig(out_path, dpi=150)
+    plt.close(fig)
+
+
 def run_study_and_report(
     base: InterceptionConfig = NOMINAL,
     rhos: Sequence[float] = (0.45, 0.55, 0.65, 0.75, 0.85),
@@ -150,17 +187,22 @@ def run_study_and_report(
     seeds = list(range(2000, 2000 + n_trials))
 
     records = sweep_design_space(base, rhos, ns, seeds)
-    model = fit_surrogate(records)
+    models = fit_surrogates(records)
+    model = models["success_rate"]
     r2 = surrogate_r2(model, records)
     train, _test = split_train_test(records, test_frac=0.25, seed=1)
     r2_train = surrogate_r2(model, train)
-    rho_star, n_star, pred_star = optimize_on_surrogate(model, (0.4, 0.9), (3, 12))
+    rho_star, n_star, pred_star, pred_time, pred_minsep, feas_frac = constrained_optimize(
+        records, t_window=60.0, hard_safe=base.hard_safe
+    )
 
     valid_records = [r for r in records if np.isfinite(r.mean_capture_time)]
     best_rec = max(valid_records, key=lambda r: r.success_rate)
 
     fig_dir = out_dir / "figures"
     fig_dir.mkdir(parents=True, exist_ok=True)
+    plot_design_envelope(plt, models, records, rhos, ns, 60.0, base.hard_safe,
+                         fig_dir / "fig0_design_envelope.png")
     plot_success_surface(plt, model, rhos, ns, records, fig_dir / "fig1_success_surface.png")
     plot_success_vs_rho(plt, records, fig_dir / "fig2_success_vs_rho.png")
     plot_min_formation(plt, fig_dir / "fig3_min_formation.png")
@@ -170,19 +212,21 @@ def run_study_and_report(
     records_json = [r.to_dict() for r in records]
     (out_dir / "design_study.json").write_text(
         json.dumps({"records": records_json, "r2": r2, "r2_train": r2_train,
-                    "optimum": {"rho": rho_star, "n": n_star, "pred_success": pred_star}},
+                    "optimum": {"rho": rho_star, "n": n_star, "pred_success": pred_star, "pred_time": pred_time, "pred_minsep": pred_minsep, "feasible_frac": feas_frac}},
                    ensure_ascii=False, indent=2),
         encoding="utf-8",
     )
 
     conclusion = build_conclusion(base, records, table, rho_star, n_star, pred_star,
                                   r2, best_rec)
+    conclusion += (f"\n### 约束核验\n- 约束最优 (rho={rho_star:.3f}, n={n_star}) 预测捕获时间≈{pred_time:.1f}s，"
+                  f"最小机间距≈{pred_minsep:.1f}m，可行域占比 {feas_frac*100:.1f}%\n")
     (out_dir / "engineering_conclusion.md").write_text(conclusion, encoding="utf-8")
     return {
         "records": records,
         "r2": r2,
         "r2_train": r2_train,
-        "optimum": {"rho": rho_star, "n": n_star, "pred_success": pred_star},
+        "optimum": {"rho": rho_star, "n": n_star, "pred_success": pred_star, "pred_time": pred_time, "pred_minsep": pred_minsep, "feasible_frac": feas_frac},
         "table": table,
         "best_record": best_rec,
         "conclusion": conclusion,

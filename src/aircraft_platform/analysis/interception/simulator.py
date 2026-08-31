@@ -26,6 +26,7 @@ class SimResult:
     min_sep_frac: float      # 最小机间距 / d_safe
     final_positions: np.ndarray
     evader_traj: np.ndarray
+    pursuer_traj: np.ndarray
     pursuer_dist_history: np.ndarray
 
 
@@ -41,6 +42,43 @@ def _initial_positions(cfg: InterceptionConfig, rng: np.random.Generator) -> np.
         radius = cfg.init_scale * (0.75 + 0.5 * rng.random())
         positions[:, i] = base + radius * vec
     return positions
+
+
+def _patrol_positions(cfg, rng):
+    """拦截机在任务空域内均匀散布（巡逻位），保证初始最小间距。"""
+    dim = cfg.dim
+    n = cfg.n_pursuers
+    positions = np.zeros((dim, n))
+    min_gap = max(cfg.hard_safe, cfg.init_scale * 0.2)
+    placed = 0
+    attempts = 0
+    while placed < n and attempts < 4000:
+        attempts += 1
+        cand = np.array([rng.uniform(cfg.xmin, cfg.xmax), rng.uniform(cfg.ymin, cfg.ymax)])
+        if dim > 2:
+            extras = [rng.uniform(-cfg.boundary_margin, cfg.boundary_margin) for _ in range(dim - 2)]
+            cand = np.concatenate([cand, extras])
+        if placed and np.linalg.norm(positions[:, :placed] - cand[:, None], axis=0).min() < min_gap:
+            continue
+        positions[:, placed] = cand
+        placed += 1
+    return positions
+
+
+def _spawn_scenario(cfg, rng):
+    """生成一次拦截遭遇：返回(拦截机位置, 目标位置, 目标初始航向)。"""
+    if cfg.scenario == "patrol":
+        positions = _patrol_positions(cfg, rng)
+        margin = max(cfg.boundary_margin, cfg.capture_radius)
+        evader = np.array(
+            [rng.uniform(cfg.xmin + margin, cfg.xmax - margin),
+             rng.uniform(cfg.ymin + margin, cfg.ymax - margin)]
+        )
+    else:
+        positions = _initial_positions(cfg, rng)
+        evader = np.asarray(cfg.evader_init, dtype=float)
+    heading = rng.uniform(-np.pi, np.pi)
+    return positions, evader, heading
 
 
 def _pairwise_separation(positions) -> np.ndarray:
@@ -60,10 +98,9 @@ def simulate_trial(cfg: InterceptionConfig, seed: Optional[int] = None) -> SimRe
     n_p = cfg.n_pursuers
 
     positions = np.zeros((dim, n_p + 1))
-    positions[:, :n_p] = _initial_positions(cfg, rng)
-    positions[:, n_p] = cfg.evader_init
-
-    heading = rng.uniform(-np.pi, np.pi)
+    init_positions, evader_pos0, heading = _spawn_scenario(cfg, rng)
+    positions[:, :n_p] = init_positions
+    positions[:, n_p] = np.asarray(evader_pos0, dtype=float)
     evader_vel = cfg.v_evader * np.concatenate(
         [np.array([np.cos(heading), np.sin(heading)]), np.zeros(dim - 2)]
     )
@@ -83,6 +120,7 @@ def simulate_trial(cfg: InterceptionConfig, seed: Optional[int] = None) -> SimRe
     max_steps = int(round(cfg.max_time / cfg.dt))
     dist_history: List[np.ndarray] = []
     evader_traj: List[np.ndarray] = []
+    pursuer_traj: List[np.ndarray] = []
 
     alpha = min(1.0, cfg.dt / cfg.tau)
 
@@ -171,11 +209,29 @@ def simulate_trial(cfg: InterceptionConfig, seed: Optional[int] = None) -> SimRe
         if np.isfinite(step_min) and step_min < min_sep:
             min_sep = float(step_min)
 
+        # 执行层安全屏障：禁止间距小于 hard_safe 的接近（模拟机载安全约束）
+        dmat2 = _pairwise_separation(positions[:, :n_p])
+        np.fill_diagonal(dmat2, np.inf)
+        for i in range(n_p):
+            for j in range(i + 1, n_p):
+                d = dmat2[i, j]
+                if d < cfg.hard_safe:
+                    u = (positions[:, i] - positions[:, j]) / max(d, EPS)
+                    vrel = float(np.dot(dxi[:, i] - dxi[:, j], u))
+                    if vrel < 0.0:
+                        dxi[:, i] -= vrel * u / 2.0
+                        dxi[:, j] += vrel * u / 2.0
+        speed2 = np.linalg.norm(dxi, axis=0)
+        over2 = speed2 > cfg.v_pursuer
+        if np.any(over2):
+            dxi[:, over2] = cfg.v_pursuer * dxi[:, over2] / speed2[over2]
+
         # 积分更新
         positions[:, :n_p] += dxi * cfg.dt
         positions[:, n_p:] += evader_vel[:, None] * cfg.dt
 
         evader_traj.append(positions[:, n_p].copy())
+        pursuer_traj.append(positions[:, :n_p].copy())
         dist_history.append(dist_to_evader.copy())
 
         if captured:
@@ -200,5 +256,6 @@ def simulate_trial(cfg: InterceptionConfig, seed: Optional[int] = None) -> SimRe
         min_sep_frac=float(min_sep / cfg.d_safe) if cfg.d_safe > 0 else 0.0,
         final_positions=positions.copy(),
         evader_traj=np.array(evader_traj),
+        pursuer_traj=np.array(pursuer_traj),
         pursuer_dist_history=np.array(dist_history),
     )

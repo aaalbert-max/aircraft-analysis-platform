@@ -1,0 +1,179 @@
+{
+  "records": [
+    {
+      "rho": 0.45,
+      "n_pursuers": 3,
+      "n_trials": 16,
+      "success_rate": 0.625,
+      "mean_capture_time": 80.8434,
+      "median_capture_time": 83.73750000000001,
+      "mean_min_sep": 11.363986153232396,
+      "mean_arrival_variance": 397.39338787500003,
+      "timeout_rate": 0.375
+    },
+    {
+      "rho": 0.45,
+      "n_pursuers": 6,
+      "n_trials": 16,
+      "success_rate": 0.75,
+      "mean_capture_time": 71.39,
+      "median_capture_time": 69.31649999999999,
+      "mean_min_sep": 11.050086159099063,
+      "mean_arrival_variance": 542.962998936875,
+      "timeout_rate": 0.25
+    },
+    {
+      "rho": 0.45,
+      "n_pursuers": 8,
+      "n_trials": 16,
+      "success_rate": 0.875,
+      "mean_capture_time": 60.173142857142864,
+      "median_capture_time": 56.595,
+      "mean_min_sep": 11.719357608638072,
+      "mean_arrival_variance": 350.382700437984,
+      "timeout_rate": 0.125
+    },
+    {
+      "rho": 0.55,
+      "n_pursuers": 3,
+      "n_trials": 16,
+      "success_rate": 0.75,
+      "mean_capture_time": 71.5715,
+      "median_capture_time": 72.27000000000001,
+      "mean_min_sep": 10.686467082298897,
+      "mean_arrival_variance": 258.871757890625,
+      "timeout_rate": 0.25
+    },
+    {
+      "rho": 0.55,
+      "n_pursuers": 6,
+      "n_trials": 16,
+      "success_rate": 0.75,
+      "mean_capture_time": 61.660500000000006,
+      "median_capture_time": 57.4365,
+      "mean_min_sep": 11.742124756493403,
+      "mean_arrival_variance": 435.09024155781253,
+      "timeout_rate": 0.25
+    },
+    {
+      "rho": 0.55,
+      "n_pursuers": 8,
+      "n_trials": 16,
+      "success_rate": 0.875,
+      "mean_capture_time": 60.07414285714286,
+      "median_capture_time": 50.176500000000004,
+      "mean_min_sep": 10.751118728895824,
+      "mean_arrival_variance": 357.6005937461807,
+      "timeout_rate": 0.125
+    },
+    {
+      "rho": 0.65,
+      "n_pursuers": 3,
+      "n_trials": 16,
+      "success_rate": 0.75,
+      "mean_capture_time": 66.49225,
+      "median_capture_time": 62.139,
+      "mean_min_sep": 10.435967545740553,
+      "mean_arrival_variance": 152.11479456249998,
+      "timeout_rate": 0.25
+    },
+    {
+      "rho": 0.65,
+      "n_pursuers": 6,
+      "n_trials": 16,
+      "success_rate": 0.9375,
+      "mean_capture_time": 56.718199999999996,
+      "median_capture_time": 49.071000000000005,
+      "mean_min_sep": 12.138064572502424,
+      "mean_arrival_variance": 271.87491499265633,
+      "timeout_rate": 0.0625
+    },
+    {
+      "rho": 0.65,
+      "n_pursuers": 8,
+      "n_trials": 16,
+      "success_rate": 0.75,
+      "mean_capture_time": 43.98075,
+      "median_capture_time": 38.28,
+      "mean_min_sep": 10.593494709987803,
+      "mean_arrival_variance": 234.42228394238762,
+      "timeout_rate": 0.25
+    },
+    {
+      "rho": 0.75,
+      "n_pursuers": 3,
+      "n_trials": 16,
+      "success_rate": 0.5625,
+      "mean_capture_time": 58.93066666666667,
+      "median_capture_time": 54.417,
+      "mean_min_sep": 10.6100026738042,
+      "mean_arrival_variance": 157.439174578125,
+      "timeout_rate": 0.4375
+    },
+    {
+      "rho": 0.75,
+      "n_pursuers": 6,
+      "n_trials": 16,
+      "success_rate": 0.75,
+      "mean_capture_time": 50.85575,
+      "median_capture_time": 44.8965,
+      "mean_min_sep": 11.196925117088696,
+      "mean_arrival_variance": 186.1077829823438,
+      "timeout_rate": 0.25
+    },
+    {
+      "rho": 0.75,
+      "n_pursuers": 8,
+      "n_trials": 16,
+      "success_rate": 0.75,
+      "mean_capture_time": 44.78375,
+      "median_capture_time": 31.911,
+      "mean_min_sep": 10.660527150204285,
+      "mean_arrival_variance": 203.4070493574769,
+      "timeout_rate": 0.25
+    },
+    {
+      "rho": 0.85,
+      "n_pursuers": 3,
+      "n_trials": 16,
+      "success_rate": 0.5,
+      "mean_capture_time": 50.7045,
+      "median_capture_time": 48.18000000000001,
+      "mean_min_sep": 10.872386737781085,
+      "mean_arrival_variance": 88.12776551562501,
+      "timeout_rate": 0.5
+    },
+    {
+      "rho": 0.85,
+      "n_pursuers": 6,
+      "n_trials": 16,
+      "success_rate": 0.625,
+      "mean_capture_time": 38.445,
+      "median_capture_time": 38.3625,
+      "mean_min_sep": 11.070425914975116,
+      "mean_arrival_variance": 148.4719655375,
+      "timeout_rate": 0.375
+    },
+    {
+      "rho": 0.85,
+      "n_pursuers": 8,
+      "n_trials": 16,
+      "success_rate": 0.5,
+      "mean_capture_time": 26.507250000000003,
+      "median_capture_time": 22.2915,
+      "mean_min_sep": 10.027211080317775,
+      "mean_arrival_variance": 160.92446429253908,
+      "timeout_rate": 0.5
+    }
+  ],
+  "r2": 0.9069922606191505,
+  "r2_train": 0.880148645660586,
+  "optimum": {
+    "rho": 0.6033898305084746,
+    "n": 6,
+    "pred_success": 0.8722916666666667,
+    "pred_time": 56.399587619047466,
+    "pred_minsep": 11.758336327148646,
+    "feasible_frac": 0.66
+  }
+}
