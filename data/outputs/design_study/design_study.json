@@ -175,5 +175,91 @@
     "pred_time": 56.399587619047466,
     "pred_minsep": 11.758336327148646,
     "feasible_frac": 0.66
+  },
+  "cross_validation": [
+    {
+      "rho": 0.45,
+      "n_required": NaN,
+      "pred_success": NaN
+    },
+    {
+      "rho": 0.55,
+      "n_required": NaN,
+      "pred_success": NaN
+    },
+    {
+      "rho": 0.65,
+      "n_required": 4.518987341772152,
+      "pred_success": 0.871875
+    },
+    {
+      "rho": 0.75,
+      "n_required": NaN,
+      "pred_success": NaN
+    },
+    {
+      "rho": 0.85,
+      "n_required": NaN,
+      "pred_success": NaN
+    }
+  ],
+  "summary": {
+    "target_speed": 10.0,
+    "capture_radius": 15.0,
+    "soft_safe": 50.0,
+    "hard_safe": 10.0,
+    "min_formation_ideal": 6,
+    "min_formation_eta": 8,
+    "success_rho065": 0.9375,
+    "capture_time_rho065": 56.718199999999996,
+    "min_sep_rho065": 12.138064572502424,
+    "r2": 0.9069922606191505,
+    "recommended": {
+      "rho": 0.6033898305084746,
+      "n": 6,
+      "pred_success": 0.8722916666666667,
+      "pred_time": 56.399587619047466,
+      "pred_minsep": 11.758336327148646,
+      "feasible_frac": 0.66
+    },
+    "viable_rho_range": "0.60～0.70",
+    "benchmark_report": {
+      "none_role": 0.68,
+      "dual_role": 0.82,
+      "rho065": 0.84,
+      "capture_time": 74.7
+    },
+    "cross_validation": [
+      {
+        "rho": 0.45,
+        "n_required": NaN,
+        "pred_success": NaN
+      },
+      {
+        "rho": 0.55,
+        "n_required": NaN,
+        "pred_success": NaN
+      },
+      {
+        "rho": 0.65,
+        "n_required": 4.518987341772152,
+        "pred_success": 0.871875
+      },
+      {
+        "rho": 0.75,
+        "n_required": NaN,
+        "pred_success": NaN
+      },
+      {
+        "rho": 0.85,
+        "n_required": NaN,
+        "pred_success": NaN
+      }
+    ],
+    "min_formation_overall": [
+      0.65,
+      4.518987341772152,
+      0.871875
+    ]
   }
 }

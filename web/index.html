@@ -3,273 +3,266 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>智能协同反制分析平台</title>
+<title>智能协同反制分析平台 · 星海二号</title>
 <style>
-  :root{--bg:#0f172a;--panel:#1e293b;--line:#334155;--txt:#e2e8f0;--muted:#94a3b8;--acc:#38bdf8;--red:#ef4444;}
+  :root{--bg:#0b1220;--panel:#131c2e;--panel2:#182238;--line:#26324a;--txt:#e6edf6;--muted:#8ea0bd;--acc:#38bdf8;--red:#ef4444;--green:#4ade80;--amber:#f59e0b;}
   *{box-sizing:border-box}
-  body{margin:0;font-family:"Microsoft YaHei",system-ui,sans-serif;background:var(--bg);color:var(--txt);}
-  header{padding:14px 22px;background:var(--panel);border-bottom:1px solid var(--line);}
-  header h1{font-size:19px;margin:0;font-weight:600}
-  header small{color:var(--muted)}
-  .wrap{display:grid;grid-template-columns:300px 1fr;gap:14px;padding:16px;max-width:1500px;margin:0 auto}
-  .side{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;height:fit-content}
-  .side label{display:block;color:var(--muted);font-size:13px;margin-bottom:4px}
-  .side .val{color:var(--acc);font-weight:600}
-  input[type=range]{width:100%}
-  button{background:var(--acc);border:none;color:#04121f;font-weight:600;border-radius:8px;padding:10px 14px;cursor:pointer;font-size:14px;margin-top:10px;width:100%}
-  button.ghost{background:transparent;border:1px solid var(--line);color:var(--txt);margin-top:6px}
-  .metrics{margin-top:14px;font-size:13px;line-height:1.9}
+  body{margin:0;font-family:"Microsoft YaHei",system-ui,sans-serif;background:var(--bg);color:var(--txt);line-height:1.7}
+  header{padding:20px 26px;background:linear-gradient(120deg,#0f1a30,#15254a);border-bottom:1px solid var(--line)}
+  header h1{font-size:22px;margin:0;font-weight:700}
+  header h1 span{color:var(--acc)}
+  header small{color:var(--muted);display:block;margin-top:6px;font-size:13.5px}
+  .tabs{display:flex;gap:4px;flex-wrap:wrap;padding:12px 26px;background:var(--panel);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5;overflow-x:auto}
+  .tabs a{color:var(--muted);text-decoration:none;padding:7px 14px;border-radius:8px;font-size:13px;white-space:nowrap}
+  .tabs a:hover{color:var(--txt);background:var(--panel2)}
+  .wrap{max-width:1440px;margin:0 auto;padding:22px 26px}
+  .sec{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px 24px;margin-bottom:18px}
+  .sec h2{font-size:18px;margin:0 0 14px;font-weight:700;border-left:4px solid var(--acc);padding-left:12px}
+  .sec h3{font-size:15px;color:var(--acc);margin:20px 0 10px;font-weight:600}
+  .prose{color:#c8d4e6;font-size:14.5px}
+  .prose b{color:var(--txt)}
+  .kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:8px}
+  .kpi .card{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:16px;text-align:center}
+  .kpi .num{font-size:30px;font-weight:800;color:var(--acc);line-height:1.2}
+  .kpi .kpi-num{font-size:26px;font-weight:800;color:var(--acc)}
+  .kpi .lbl{color:var(--muted);font-size:12.5px;margin-top:4px}
+  .figgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .figgrid figure{margin:0;background:#0b1322;border:1px solid var(--line);border-radius:10px;padding:8px}
+  .figgrid img{width:100%;border-radius:6px;display:block}
+  .figgrid figcaption{font-size:12px;color:var(--muted);text-align:center;margin-top:6px}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:6px}
+  th,td{border:1px solid var(--line);padding:8px 10px;text-align:center}
+  th{background:var(--panel2);color:var(--acc);font-weight:600}
+  td{color:#c8d4e6}
+  .hint{color:var(--amber);font-size:12.5px;margin-top:8px}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .chip{background:var(--panel2);border:1px solid var(--line);border-radius:20px;padding:5px 12px;font-size:12.5px;color:var(--muted)}
+  .chip b{color:var(--txt)}
+  .demo{display:grid;grid-template-columns:270px 1fr;gap:16px}
+  .side{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:16px;height:fit-content}
+  .side label{display:block;color:var(--muted);font-size:12.5px;margin:8px 0 4px}
+  .side .val{color:var(--acc);font-weight:700}
+  .side input[type=range]{width:100%}
+  .btnrow{display:flex;gap:8px;margin-top:12px}
+  button{background:var(--acc);border:none;color:#04121f;font-weight:700;border-radius:8px;padding:10px 12px;cursor:pointer;font-size:13.5px;flex:1}
+  button.ghost{background:transparent;border:1px solid var(--line);color:var(--txt)}
+  .metrics{margin-top:12px;font-size:13px;line-height:1.9}
   .metrics b{color:var(--acc)}
-  .main{display:flex;flex-direction:column;gap:14px}
-  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px}
-  .card h3{margin:0 0 8px;font-size:14px;color:var(--muted);font-weight:500}
-  #anim{width:100%;height:460px;background:#0b1220;border-radius:8px;display:block}
-  .row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-  canvas.ch{width:100%;height:220px;background:#0b1220;border-radius:8px}
-  .legend{font-size:12px;color:var(--muted);margin-top:6px}
-  .tag{display:inline-block;padding:2px 8px;border-radius:6px;font-size:12px;margin-top:6px}
-  .tag.ok{background:rgba(34,197,94,.15);color:#4ade80}
-  .tag.no{background:rgba(239,68,68,.15);color:#f87171}
-  .advice{font-size:13px;line-height:1.9}
-  .advice .line{padding:4px 0;border-bottom:1px solid var(--line)}
+  .main{display:flex;flex-direction:column;gap:12px}
+  .main .card{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px}
+  .main .card h3{margin:0 0 8px;font-size:13.5px;color:var(--muted);font-weight:500}
+  #anim{width:100%;height:430px;background:#0b1322;border-radius:8px;display:block}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  canvas.ch{width:100%;height:210px;background:#0b1322;border-radius:8px}
+  .advice{font-size:13.5px;line-height:2}
+  .advice .line{padding:6px 0;border-bottom:1px solid var(--line)}
   .advice b{color:var(--acc)}
-  .advice .hint{color:var(--muted);font-size:12px;margin-top:7px}
+  @media(max-width:980px){.kpi{grid-template-columns:repeat(2,1fr)}.figgrid{grid-template-columns:1fr}.demo{grid-template-columns:1fr}.row2{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 <header>
-  <h1>智能协同反制分析平台 <small>· 基于三维覆盖立体角的多拦截机协同围捕</small></h1>
+  <h1>智能协同反制分析平台 · <span>星海二号</span></h1>
+  <small>面向低空小型无人机集群协同反制的 <b>仿真验证与设计支撑平台</b> ｜ 揭榜挂帅 CS-202615「新质反无人机拦截器研究」 ｜ 发榜：中国航天科工集团第十总体设计部</small>
 </header>
+<nav class="tabs">
+  <a href="#s1">总览</a><a href="#s2">痛点与创新</a><a href="#s3">核心技术</a>
+  <a href="#s4">核心成果</a><a href="#s5">设计建议</a><a href="#s6">实时演示</a><a href="#s7">复现架构</a>
+</nav>
 <div class="wrap">
-  <div class="side">
-    <label>速度比 ρ: <span class="val" id="v-rho">0.65</span></label>
-    <input type="range" id="rho" min="0.40" max="0.90" step="0.01" value="0.65">
-    <label style="margin-top:10px">拦截机数量 n: <span class="val" id="v-n">6</span></label>
-    <input type="range" id="n" min="3" max="10" step="1" value="6">
-    <label style="margin-top:10px">随机种子: <span class="val" id="v-seed">1234</span></label>
-    <input type="range" id="seed" min="0" max="9999" step="1" value="1234">
-    <button id="run">▶ 运行仿真</button>
-    <button class="ghost" id="play">⏸ 暂停 / 播放</button>
-    <button class="ghost" id="vview">视角：三维</button>
-    <button class="ghost" id="vrot">自动旋转：开</button>
-    <div class="metrics" id="metrics">请先运行一次仿真。</div>
-    <div id="tag"></div>
-  </div>
-  <div class="main">
-    <div class="card"><h3>协同围捕过程（三维/俯视，绿圈=捕获半径，红点=目标，蓝点=拦截机；拖动旋转、滚轮缩放）</h3>
-      <canvas id="anim"></canvas></div>
-    <div class="card"><h3>工程设计建议（面向发榜单位）</h3><div id="advice" class="advice"></div></div>
-    <div class="row">
-      <div class="card"><h3>捕获成功率 - 速度比（当前 n）</h3><canvas class="ch" id="ch-succ"></canvas></div>
-      <div class="card"><h3>三维覆盖最小编队 - 速度比</h3><canvas class="ch" id="ch-min"></canvas></div>
+
+  <section class="sec" id="s1">
+    <h2>一、平台总览（关键成果）</h2>
+    <div class="kpi" id="kpis"></div>
+    <div class="chips" id="chips"></div>
+  </section>
+
+  <section class="sec" id="s2">
+    <h2>二、痛点与平台定位</h2>
+    <div class="prose">
+      <p>现代低空威胁已由<b>单架无人机</b>上升为<b>百架级智能无人机蜂群</b>。典型"低慢小"目标（消费级多旋翼，约 10 m/s、15 m 量级目标特性）对末端防空构成现实威胁。受<b>平台成本与载荷约束</b>，单架拦截机速度难以对目标全面占优，面对高速机动目标<b>单机拦截概率低</b>。</p>
+      <p>本平台针对该痛点，支撑"<b>以数量优势弥补速度劣势</b>"的<b>多机协同围捕</b>方案（对应方案报告 3.5 节：《基于三维覆盖立体角的多拦截机协同围捕制导控制方案》），通过<b>可复现的仿真、蒙特卡洛统计、代理模型与参数寻优</b>，为总体单位回答"<b>几架、多快、什么策略</b>才能安全可靠地拦截目标"，并给出<b>工程设计建议</b>与<b>性能包络</b>。</p>
     </div>
-  </div>
+  </section>
+
+  <section class="sec" id="s3">
+    <h2>三、核心技术：基于三维覆盖立体角的协同围捕</h2>
+    <div class="figgrid">
+      <figure><img src="/figures/fig3_min_formation.png"><figcaption>三维覆盖立体角 → 最小编队规模</figcaption></figure>
+      <figure><img src="/figures/fig0_design_envelope.png"><figcaption>设计空间包络：成功率 / 时间·安全约束 / 最小编队</figcaption></figure>
+      <figure><img src="/figures/fig1_success_surface.png"><figcaption>协同围捕成功率设计空间</figcaption></figure>
+    </div>
+    <div class="prose">
+      <p>针对速度劣势（速度比 ρ&lt;1）拦截机，以<b>阿波罗尼斯球几何</b>推导单架拦截机的<b>三维覆盖立体角</b>，把全包围条件由二维角修正为三维球面角，从而<b>严格确定保证完全包围的最小编队规模</b>：</p>
+      <p class="chips">
+        <span class="chip">半张角 <b>sin α = ρ + R_c(1−ρ²)/d</b></span>
+        <span class="chip">覆盖立体角 <b>Ω = 2π(1−√(1−sin²α))</b></span>
+        <span class="chip">最小编队 <b>n_min = ⌈4π/(η·Ω)⌉</b></span>
+      </p>
+      <p>再结合 <b>拦截者—驱赶者动态角色分配</b>（按 60° 角度阈值）与<b>人工势场协同制导 + 机间避碰（软 50 m / 硬 10 m）</b>，实现速度劣势拦截机通过<b>异步到达序贯封锁</b>提高捕获成功率；围捕判定为<b>至少 2 架进入 15 m 捕获半径</b>。</p>
+      <p class="hint">创新点：把二维平面覆盖角升级为<b>三维覆盖立体角</b>，避免低估最小编队规模、防止三维空域围捕失效——这是本平台最核心的理论创新。</p>
+    </div>
+  </section>
+
+  <section class="sec" id="s4">
+    <h2>四、核心成果与验证</h2>
+    <div class="figgrid">
+      <figure><img src="/figures/fig2_success_vs_rho.png"><figcaption>捕获成功率 vs 速度比（倒 U 形）</figcaption></figure>
+      <figure><img src="/figures/fig4_surrogate_fit.png"><figcaption>代理模型拟合（R² 精度）</figcaption></figure>
+      <figure><img src="/figures/fig3_min_formation.png"><figcaption>最小编队 vs 速度比</figcaption></figure>
+    </div>
+    <h3>交叉验证：仿真最小编队 vs 三维覆盖最小编队</h3>
+    <div class="prose" style="margin-bottom:6px">以"<b>成功率≥85%、捕获时间≤60s、机间≥10m</b>"为达标判据，用代理模型反推各速度比所需的最小编队规模，并与三维覆盖立体角理论值互相印证。</div>
+    <table id="cvTable"></table>
+    <h3>对标发榜单位方案报告（统一判据复算）</h3>
+    <div class="prose" style="margin-bottom:6px">方案报告 3.5.7 节数值为<b>参考结果</b>（20/13 m/s、未统一判据）；本平台在<b>项目标称工况（10/6.5 m/s）+ 统一 15 m 判据 + 巡逻场景</b>下完成复算。</div>
+    <table id="benchTable"></table>
+  </section>
+
+  <section class="sec" id="s5">
+    <h2>五、工程设计建议（面向发榜单位）</h2>
+    <div class="advice" id="advice"></div>
+  </section>
+
+  <section class="sec" id="s6">
+    <h2>六、实时交互演示</h2>
+    <div class="demo">
+      <div class="side">
+        <label>速度比 ρ：<span class="val" id="v-rho">0.65</span></label>
+        <input type="range" id="rho" min="0.40" max="0.90" step="0.01" value="0.65">
+        <label>拦截机数量 n：<span class="val" id="v-n">6</span></label>
+        <input type="range" id="n" min="3" max="10" step="1" value="6">
+        <label>随机种子：<span class="val" id="v-seed">1234</span></label>
+        <input type="range" id="seed" min="0" max="9999" step="1" value="1234">
+        <div class="btnrow">
+          <button id="run">▶ 运行仿真</button>
+          <button class="ghost" id="play">⏸ 暂停</button>
+          <button class="ghost" id="vview">三维</button>
+          <button class="ghost" id="vrot">自旋</button>
+        </div>
+        <div class="metrics" id="metrics">拖种子可看初始布局，点「运行仿真」播放围捕动画。</div>
+      </div>
+      <div class="main">
+        <div class="card"><h3>协同围捕过程（三维/俯视；拖动旋转、滚轮缩放；绿圈=捕获半径）</h3><canvas id="anim"></canvas></div>
+        <div class="row2">
+          <div class="card"><h3>捕获成功率 - 速度比（当前 n）</h3><canvas class="ch" id="ch-succ"></canvas></div>
+          <div class="card"><h3>三维覆盖最小编队 - 速度比</h3><canvas class="ch" id="ch-min"></canvas></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="s7">
+    <h2>七、复现与平台架构</h2>
+    <div class="prose">
+      <p><b>复现</b>：<code>pip install scipy scikit-learn matplotlib pyarrow</code>；<code>PYTHONPATH=src; python scripts/run_design_study.py</code> 生成全部报告图与指标；<code>PYTHONPATH=src; python web/app.py</code> 启动本页面。</p>
+      <p><b>核心模块</b>：<code>solidangle.py</code>（三维覆盖立体角→最小编队）、<code>simulator.py</code>（协同围捕仿真引擎）、<code>study.py</code>（设计空间采样/代理模型/约束寻优）、<code>report.py</code>（报告图与工程结论）。<b>数据&图</b>：<code>data/outputs/design_study/</code>。</p>
+      <p class="hint">所有数值均为平台实算所得，可通过同一随机种子复现，满足发榜单位"可复现、可核验"的评审要求。</p>
+    </div>
+  </section>
 </div>
 
 <script>
 const $=id=>document.getElementById(id);
-let state={rho:0.65,n:6,seed:1234,frames:null,metrics:null,idx:0,playing:false,speed:1,timer:null,design:null,showLayout:false,layout:null};
-
-function setVals(){
-  $("v-rho").textContent=(+$("rho").value).toFixed(2);
-  $("v-n").textContent=$("n").value;
-  $("v-seed").textContent=$("seed").value;
-  state.rho=+$("rho").value; state.n=+$("n").value; state.seed=+$("seed").value;
-  drawSucc();
-  scheduleLayout();
-}
-["rho","n","seed"].forEach(id=>$(id).addEventListener("input",setVals));
-
-let layoutTimer=null;
-function scheduleLayout(){ if(layoutTimer)clearTimeout(layoutTimer); layoutTimer=setTimeout(loadLayout,70); }
-async function loadLayout(){
-  try{
-    const r=await fetch("/api/layout",{method:"POST",headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({rho:state.rho,n:state.n,seed:state.seed,dim:3})});
-    const d=await r.json();
-    state.layout={arena:d.arena,capture_radius:d.capture_radius,seed:d.seed,
-      frame:{t:[0],evader:[d.evader_init],pursuers:[d.pursuers_init]}};
-    state.showLayout=true;
-    if(state.timer){clearInterval(state.timer);state.timer=null;state.playing=false;$("play").textContent="▶ 播放";}
-    drawAnim();
-  }catch(e){}
-}
-
-async function run(){
-  $("run").disabled=true;
-  try{
-    const r=await fetch("/api/simulate",{method:"POST",headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({rho:state.rho,n:state.n,seed:state.seed})});
-    const d=await r.json();
-    state.frames=d.frames; state.metrics=d; state.idx=0; state.showLayout=false;
-    drawMetrics(); startAnim();
-  }catch(e){$("metrics").textContent="错误："+e;}
-  $("run").disabled=false;
-}
-$("run").addEventListener("click",run);
-
-function drawMetrics(){
-  const m=state.metrics; if(!m)return;
-  const t=m.capture_time==null?"未捕获":m.capture_time.toFixed(1)+" s";
-  $("metrics").innerHTML=`捕获：<b>${m.captured?"成功":"失败"}</b>｜捕获时间 <b>${t}</b><br>
-    第二近距 <b>${m.best_second.toFixed(2)} m</b>｜机间最小间距 <b>${m.min_sep.toFixed(2)} m</b><br>
-    到达序时方差 <b>${m.arrival_variance==null?"-":m.arrival_variance.toFixed(3)}</b>`;
-  $("tag").innerHTML=`<span class="tag ${m.captured?"ok":"no"}">${m.captured?"围捕成功":"围捕超时/失败"}</span>`;
-}
-
-function startAnim(){
-  if(state.timer)clearInterval(state.timer);
-  state.playing=true; $("play").textContent="⏸ 暂停 / 播放";
-  state.timer=setInterval(()=>{ state.idx+=state.speed; if(state.idx>=state.frames.t.length-1){state.idx=state.frames.t.length-1; state.playing=false; $("play").textContent="▶ 播放"; clearInterval(state.timer);} drawAnim(); },30);
-}
-$("play").addEventListener("click",()=>{
-  if(!state.frames)return;
-  if(state.playing){state.playing=false;clearInterval(state.timer);$("play").textContent="▶ 播放";}
-  else{ if(state.idx>=state.frames.t.length-1)state.idx=0; startAnim(); }
-});
-
-function mapPt(x,y,a,w,h,pad){
-  const [xmin,xmax,ymin,ymax]=a;
-  const sx=pad+(x-xmin)/(xmax-xmin)*(w-2*pad);
-  const sy=h-pad-(y-ymin)/(ymax-ymin)*(h-2*pad);
-  return [sx,sy];
-}
+let state={rho:0.65,n:6,seed:1234,frames:null,metrics:null,idx:0,playing:false,timer:null,design:null,showLayout:false,layout:null};
 let view3d=true, rotY=0.65, rotX=0.30, zoom=1.0, dragging=null, autoRot=true;
+
+function pct(x){return x==null?"-":(x*100).toFixed(1)+"%";}
+function num(x,d){return x==null?"-":x.toFixed(d);}
+
+function fillStatic(){
+  const d=state.design; if(!d)return; const s=d.summary||{};
+  const kpis=[];
+  kpis.push({n:"理论最小编队",v:(s.min_formation_ideal!=null?s.min_formation_ideal:"-")+" 架",sub:null,extra:"η=0.8 需 "+(s.min_formation_eta!=null?s.min_formation_eta:"-")+" 架"});
+  kpis.push({n:"捕获成功率 (ρ=.65,n=6)",v:pct(s.success_rho065),sub:"统一判据复算",extra:null});
+  kpis.push({n:"平均捕获时间",v:num(s.capture_time_rho065,1)+" s",sub:"目标 10 m/s / 拦截 6.5 m/s",extra:null});
+  kpis.push({n:"代理模型精度",v:"R² = "+num(s.r2,3),sub:"随机森林代理模型",extra:null});
+  $("kpis").innerHTML=kpis.map(k=>`<div class="card"><div class="kpi-num">${k.v}</div><div class="lbl">${k.n}</div>${k.sub?`<div class="lbl">${k.sub}</div>`:""}${k.extra?`<div class="lbl">${k.extra}</div>`:""}</div>`).join("");
+  const chips=[]; const a=(s.min_formation_ideal!=null)?`理论 ${s.min_formation_ideal} 架`:"";
+  const b=(s.min_formation_eta!=null)?`考虑填充效率 ${s.min_formation_eta} 架`:"";
+  chips.push(`<span class="chip">ρ=0.65 最小编队：<b>${a} / ${b}</b></span>`);
+  chips.push(`<span class="chip">可行速度比窗口：<b>${s.viable_rho_range||"-"}</b></span>`);
+  if(s.recommended&&s.recommended.rho!=null)chips.push(`<span class="chip">推荐设计：<b>ρ≈${num(s.recommended.rho,2)}、n≈${s.recommended.n}，预测${pct(s.recommended.pred_success)}</b></span>`);
+  $("chips").innerHTML=chips.join("");
+
+  // 交叉验证表
+  const cv=(d.cross_validation||[]), sa=(d.solid_angle||[]);
+  let h="<tr><th>速度比 ρ</th><th>仿真达标最小编队 n</th><th>三维覆盖·理想</th><th>三维覆盖·η=0.8</th></tr>";
+  cv.forEach(r=>{const m=sa.find(x=>Math.abs(x.rho-r.rho)<1e-3);const nr=r.n_required==r.n_required?Math.round(r.n_required):"未达标";
+    h+=`<tr><td>${r.rho.toFixed(2)}</td><td>${nr}</td><td>${m?m.n_ideal:"-"}</td><td>${m?m.n_eta:"-"}</td></tr>`;});
+  $("cvTable").innerHTML=h;
+
+  // 对标表
+  const bm=s.benchmark_report||{};
+  let bh="<tr><th>指标</th><th>方案报告参考值</th><th>本平台（标称工况+统一判据）</th></tr>";
+  bh+=`<tr><td>捕获成功率（双角色协同）</td><td>${pct(bm.rho065)}</td><td>${pct(s.success_rho065)}</td></tr>`;
+  bh+=`<tr><td>无协同基线</td><td>${pct(bm.none_role)}</td><td>—</td></tr>`;
+  bh+=`<tr><td>典型捕获时间</td><td>${bm.capture_time!=null?bm.capture_time+" s":"—"}</td><td>${num(s.capture_time_rho065,1)} s</td></tr>`;
+  $("benchTable").innerHTML=bh;
+
+  // 建议
+  const rec=d.recommendation||{}, cr=d.criteria||{}, base=(d.records||[]).find(r=>Math.abs(r.rho-0.65)<0.003&&r.n_pursuers===6);
+  let adv=`<div class="line"><b>推荐设计</b>：速度比 ρ≈${num(rec.rho,2)}，拦截机数 n≈${rec.n!=null?rec.n:"-"}</div>`;
+  adv+=`<div class="line">预测 <b>${pct(rec.pred_success)}</b> 成功率 ｜ 捕获时间 ${num(rec.pred_time,0)}s ｜ 最小机间距 ${num(rec.pred_minsep,1)}m</div>`;
+  adv+=`<div class="line">达标判据：成功率≥${pct(cr.target_success||0.85)}、捕获时间≤${cr.t_window||60}s、最小机间距≥${cr.hard_safe||10}m（可行域 ${pct(rec.feasible_frac)}）</div>`;
+  const m65=sa.find(x=>Math.abs(x.rho-0.65)<1e-3);
+  if(m65)adv+=`<div class="line">三维覆盖最小编队（ρ=0.65）：理想 <b>${m65.n_ideal}</b> 架 ／ 考虑填充效率 η=0.8 需 <b>${m65.n_eta}</b> 架</div>`;
+  if(base)adv+=`<div class="line">实测（ρ=0.65, n=6）：成功率 <b>${pct(base.success_rate)}</b>，平均捕获 ${num(base.mean_capture_time,0)}s，平均最小机间距 ${num(base.mean_min_sep,1)}m</div>`;
+  adv+=`<div class="hint">工程提醒：引导层人工势场本身不保证 ≥10m 硬安全，实际系统需叠加执行层安全屏障（对应 3.5.5 两层安全设计）。</div>`;
+  $("advice").innerHTML=adv;
+}
+
 function centerA(a){const n=a.length/2,c=[];for(let k=0;k<n;k++)c.push((a[2*k]+a[2*k+1])/2);return c;}
 function rot3(p,c,ry,rx){const x=p[0]-c[0],y=p[1]-c[1],z=p[2]-c[2];const cy=Math.cos(ry),sy=Math.sin(ry),cx=Math.cos(rx),sx=Math.sin(rx);let X=x*cy+z*sy,Z=-x*sy+z*cy,Y=y;let Y2=Y*cx-Z*sx,Z2=Y*sx+Z*cx;return [X,Y2,Z2];}
 function drawAnim(){
   const c=$("anim"),ctx=c.getContext("2d");const dpr=window.devicePixelRatio||1;const w=c.clientWidth,h=c.clientHeight;c.width=w*dpr;c.height=h*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);
-  if(state.showLayout && state.layout){
-    const m={arena:state.layout.arena,capture_radius:state.layout.capture_radius};
-    const f=state.layout.frame;
-    if(view3d && m.arena.length>=6){drawAnim3d(ctx,w,h,m,f,0,true);}
-    else{state.idx=0;drawAnim2d();}
-    return;
-  }
-  const m=state.metrics,f=state.frames;if(!f)return;
-  if(view3d && m.arena.length>=6){drawAnim3d(ctx,w,h,m,f,state.idx,false);}else{drawAnim2d();}
+  if(state.showLayout&&state.layout){const m={arena:state.layout.arena,capture_radius:state.layout.capture_radius},f=state.layout.frame;if(view3d&&m.arena.length>=6)drawAnim3d(ctx,w,h,m,f,0,true);else{state.idx=0;drawAnim2d();}return;}
+  const m=state.metrics,f=state.frames;if(!f)return;if(view3d&&m.arena.length>=6)drawAnim3d(ctx,w,h,m,f,state.idx,false);else drawAnim2d();
 }
-function drawAnim3d(ctx,w,h,m,f,idx,layoutMode){
-  if(autoRot && !dragging) rotY+=0.002;
-  const a=m.arena, xmin=a[0],xmax=a[1],ymin=a[2],ymax=a[3],zmin=a[4],zmax=a[5], c=centerA(a);
+function drawAnim3d(ctx,w,h,m,f,idx,lm){
+  if(autoRot&&!dragging)rotY+=0.002;const a=m.arena,xmin=a[0],xmax=a[1],ymin=a[2],ymax=a[3],zmin=a[4],zmax=a[5],c=centerA(a);
   const corners=[[xmin,ymin,zmin],[xmax,ymin,zmin],[xmax,ymax,zmin],[xmin,ymax,zmin],[xmin,ymin,zmax],[xmax,ymin,zmax],[xmax,ymax,zmax],[xmin,ymax,zmax]];
-  const proj0=p=>{const r=rot3(p,c,rotY,rotX);return [w/2+r[0],h/2-r[1]];};
-  let mnX=1e9,mxX=-1e9,mnY=1e9,mxY=-1e9;
-  corners.forEach(p=>{const q=proj0(p);mnX=Math.min(mnX,q[0]);mxX=Math.max(mxX,q[0]);mnY=Math.min(mnY,q[1]);mxY=Math.max(mxY,q[1]);});
-  const s=zoom*Math.min((w-90)/Math.max(mxX-mnX,1),(h-90)/Math.max(mxY-mnY,1));
-  const proj=p=>{const r=rot3(p,c,rotY,rotX);return [w/2+r[0]*s,h/2-r[1]*s];};
-  const E=[[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]];
-  ctx.strokeStyle="#334155";ctx.lineWidth=1;E.forEach(e=>{const p=proj(corners[e[0]]),q=proj(corners[e[1]]);ctx.beginPath();ctx.moveTo(p[0],p[1]);ctx.lineTo(q[0],q[1]);ctx.stroke();});
+  const proj0=p=>{const r=rot3(p,c,rotY,rotX);return [w/2+r[0],h/2-r[1]];};let mnX=1e9,mxX=-1e9,mnY=1e9,mxY=-1e9;corners.forEach(p=>{const q=proj0(p);mnX=Math.min(mnX,q[0]);mxX=Math.max(mxX,q[0]);mnY=Math.min(mnY,q[1]);mxY=Math.max(mxY,q[1]);});
+  const s=zoom*Math.min((w-90)/Math.max(mxX-mnX,1),(h-90)/Math.max(mxY-mnY,1));const proj=p=>{const r=rot3(p,c,rotY,rotX);return [w/2+r[0]*s,h/2-r[1]*s];};
+  ctx.strokeStyle="#334155";ctx.lineWidth=1;[[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]].forEach(e=>{const p=proj(corners[e[0]]),q=proj(corners[e[1]]);ctx.beginPath();ctx.moveTo(p[0],p[1]);ctx.lineTo(q[0],q[1]);ctx.stroke();});
   const n=f.pursuers[0].length;
   for(let j=0;j<n;j++){ctx.beginPath();ctx.strokeStyle="rgba(56,189,248,.5)";ctx.lineWidth=1.3;for(let i=0;i<=idx;i++){const q=proj(f.pursuers[i][j]);i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1]);}ctx.stroke();}
   ctx.beginPath();ctx.strokeStyle="rgba(239,68,68,.7)";ctx.lineWidth=1.7;for(let i=0;i<=idx;i++){const q=proj(f.evader[i]);i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1]);}ctx.stroke();
-  const ec=f.evader[idx],R=m.capture_radius;
-  [[0,2],[1,2],[0,1]].forEach(pl=>{ctx.beginPath();ctx.strokeStyle="#a3e635";ctx.setLineDash([4,3]);ctx.lineWidth=1;for(let k=0;k<=48;k++){const th=k/48*2*Math.PI,pt=[ec[0],ec[1],ec[2]];pt[pl[0]]+=R*Math.cos(th);pt[pl[1]]+=R*Math.sin(th);const q=proj(pt);k?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1]);}ctx.stroke();});
-  ctx.setLineDash([]);
+  const ec=f.evader[idx],R=m.capture_radius;[[0,2],[1,2],[0,1]].forEach(pl=>{ctx.beginPath();ctx.strokeStyle="#a3e635";ctx.setLineDash([4,3]);ctx.lineWidth=1;for(let k=0;k<=48;k++){const th=k/48*2*Math.PI,pt=[ec[0],ec[1],ec[2]];pt[pl[0]]+=R*Math.cos(th);pt[pl[1]]+=R*Math.sin(th);const q=proj(pt);k?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1]);}ctx.stroke();});ctx.setLineDash([]);
   const eq=proj(ec);ctx.beginPath();ctx.arc(eq[0],eq[1],6,0,7);ctx.fillStyle="#ef4444";ctx.fill();ctx.strokeStyle="#fff";ctx.lineWidth=1.5;ctx.stroke();
   for(let j=0;j<n;j++){const q=proj(f.pursuers[idx][j]);ctx.beginPath();ctx.arc(q[0],q[1],4.5,0,7);ctx.fillStyle="#38bdf8";ctx.fill();ctx.strokeStyle="#0b1220";ctx.stroke();}
-  ctx.fillStyle="#94a3b8";ctx.font="12px sans-serif";
-  if(layoutMode){ctx.fillText("初始布局 · 随机种子 = "+state.layout.seed+"（拖动旋转/滚轮缩放）",12,20);}
-  else{ctx.fillText("t = "+f.t[idx].toFixed(1)+" s",12,h-12);ctx.fillText("三维视角（拖动旋转 / 滚轮缩放）",12,20);}
+  ctx.fillStyle="#94a3b8";ctx.font="12px sans-serif";if(lm){ctx.fillText("初始布局 · 随机种子 = "+state.layout.seed,12,20);ctx.fillText("拖动旋转 / 滚轮缩放",12,h-12);}else{ctx.fillText("t = "+f.t[idx].toFixed(1)+" s",12,h-12);ctx.fillText("三维视角（拖动旋转 / 滚轮缩放）",12,20);}
 }
+function mapPt(x,y,a,w,h,pad){const [xmin,xmax,ymin,ymax]=a;const sx=pad+(x-xmin)/(xmax-xmin)*(w-2*pad),sy=h-pad-(y-ymin)/(ymax-ymin)*(h-2*pad);return [sx,sy];}
 function drawAnim2d(){
-  const c=$("anim"),ctx=c.getContext("2d"); const dpr=window.devicePixelRatio||1;
-  const w=c.clientWidth,h=c.clientHeight; c.width=w*dpr;c.height=h*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);
-  ctx.clearRect(0,0,w,h);
-  const m=state.metrics,f=state.frames; if(!f)return;
-  const [xmin,xmax,ymin,ymax]=m.arena; const pad=Math.min(w,h)*0.08;
-  // 边界
-  ctx.strokeStyle="#334155"; ctx.lineWidth=1;
-  const p0=mapPt(xmin,ymin,m.arena,w,h,pad),p1=mapPt(xmax,ymax,m.arena,w,h,pad);
-  ctx.strokeRect(p0[0],p0[1],p1[0]-p0[0],p1[1]-p0[1]);
-  const idx=state.idx, n=f.pursuers[0].length;
-  // 轨迹
-  for(let j=0;j<n;j++){
-    ctx.beginPath();ctx.strokeStyle="rgba(56,189,248,.55)";ctx.lineWidth=1.4;
-    for(let i=0;i<=idx;i++){const [px,py]=mapPt(f.pursuers[i][j][0],f.pursuers[i][j][1],m.arena,w,h,pad);i?ctx.lineTo(px,py):ctx.moveTo(px,py);}
-    ctx.stroke();
-  }
-  // 目标轨迹
-  ctx.beginPath();ctx.strokeStyle="rgba(239,68,68,.7)";ctx.lineWidth=1.8;
-  for(let i=0;i<=idx;i++){const [ex,ey]=mapPt(f.evader[i][0],f.evader[i][1],m.arena,w,h,pad);i?ctx.lineTo(ex,ey):ctx.moveTo(ex,ey);}
-  ctx.stroke();
-  // 捕获半径圈（围绕当前目标）
-  const [ex,ey]=mapPt(f.evader[idx][0],f.evader[idx][1],m.arena,w,h,pad);
-  const rpx=(m.capture_radius)/(xmax-xmin)*(w-2*pad);
-  ctx.beginPath();ctx.arc(ex,ey,rpx,0,7);ctx.strokeStyle="#a3e635";ctx.setLineDash([4,3]);ctx.stroke();ctx.setLineDash([]);
-  // 目标
-  ctx.beginPath();ctx.arc(ex,ey,6,0,7);ctx.fillStyle="#ef4444";ctx.fill();ctx.strokeStyle="#fff";ctx.lineWidth=1.5;ctx.stroke();
-  // 拦截机
-  for(let j=0;j<n;j++){
-    const [px,py]=mapPt(f.pursuers[idx][j][0],f.pursuers[idx][j][1],m.arena,w,h,pad);
-    ctx.beginPath();ctx.arc(px,py,4.5,0,7);ctx.fillStyle="#38bdf8";ctx.fill();ctx.strokeStyle="#0b1220";ctx.stroke();
-  }
-  // 时间
-  ctx.fillStyle="#94a3b8";ctx.font="12px sans-serif";
-  ctx.fillText("t = "+f.t[idx].toFixed(1)+" s", 12, h-12);
+  const c=$("anim"),ctx=c.getContext("2d");const dpr=window.devicePixelRatio||1;const w=c.clientWidth,h=c.clientHeight;c.width=w*dpr;c.height=h*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);
+  const m=state.showLayout?{arena:state.layout.arena,capture_radius:state.layout.capture_radius}:state.metrics;const f=state.showLayout?state.layout.frame:state.frames;if(!f)return;
+  const [xmin,xmax,ymin,ymax]=m.arena,pad=Math.min(w,h)*0.08,idx=state.showLayout?0:state.idx;
+  ctx.strokeStyle="#334155";ctx.strokeRect(pad,pad,w-2*pad,h-2*pad);
+  for(let j=0;j<f.pursuers[0].length;j++){ctx.beginPath();ctx.strokeStyle="rgba(56,189,248,.5)";ctx.lineWidth=1.3;for(let i=0;i<=idx;i++){const p=mapPt(f.pursuers[i][j][0],f.pursuers[i][j][1],m.arena,w,h,pad);i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]);}ctx.stroke();}
+  ctx.beginPath();ctx.strokeStyle="rgba(239,68,68,.7)";ctx.lineWidth=1.7;for(let i=0;i<=idx;i++){const p=mapPt(f.evader[i][0],f.evader[i][1],m.arena,w,h,pad);i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]);}ctx.stroke();
+  const e=mapPt(f.evader[idx][0],f.evader[idx][1],m.arena,w,h,pad),rp=m.capture_radius/(xmax-xmin)*(w-2*pad);
+  ctx.beginPath();ctx.arc(e[0],e[1],rp,0,7);ctx.strokeStyle="#a3e635";ctx.setLineDash([4,3]);ctx.stroke();ctx.setLineDash([]);
+  ctx.beginPath();ctx.arc(e[0],e[1],6,0,7);ctx.fillStyle="#ef4444";ctx.fill();ctx.strokeStyle="#fff";ctx.lineWidth=1.5;ctx.stroke();
+  for(let j=0;j<f.pursuers[0].length;j++){const p=mapPt(f.pursuers[idx][j][0],f.pursuers[idx][j][1],m.arena,w,h,pad);ctx.beginPath();ctx.arc(p[0],p[1],4.5,0,7);ctx.fillStyle="#38bdf8";ctx.fill();ctx.strokeStyle="#0b1220";ctx.stroke();}
+  ctx.fillStyle="#94a3b8";ctx.font="12px sans-serif";ctx.fillText("t = "+(state.showLayout?0:f.t[idx]).toFixed(1)+" s",12,h-12);
 }
-
-async function loadDesign(){
-  try{const r=await fetch("/api/design"); state.design=await r.json();}catch(e){}
-  drawSucc(); drawMin(); drawAdvice();
-}
-function drawAdvice(){
-  const el=$("advice"); const d=state.design; if(!d){el.innerHTML="运行设计研究后生成";return;}
-  const rec=d.recommendation||{}, cr=d.criteria||{};
-  const rows=(d.records||[]);
-  const base=rows.filter(r=>Math.abs(r.rho-0.65)<0.003 && r.n_pursuers===6)[0];
-  let h=`<div class="line"><b>推荐设计</b>：速度比 ρ≈${rec.rho!=null?rec.rho.toFixed(2):"-"}，拦截机数 n≈${rec.n!=null?rec.n:"-"}</div>`;
-  h+=`<div class="line">预测 <b>${rec.pred_success!=null?(rec.pred_success*100).toFixed(1):"-"}%</b> 成功率 ｜ 捕获时间 ${rec.pred_time!=null?rec.pred_time.toFixed(0):"-"}s ｜ 最小机间距 ${rec.pred_minsep!=null?rec.pred_minsep.toFixed(1):"-"}m</div>`;
-  h+=`<div class="line">判据：成功率≥${(cr.target_success||0.85)*100}%、捕获时间≤${cr.t_window||60}s、最小机间距≥${cr.hard_safe||10}m（可行域 ${rec.feasible_frac!=null?(rec.feasible_frac*100).toFixed(0):"-"}%）</div>`;
-  const sa=(d.solid_angle||[]).find(r=>Math.abs(r.rho-0.65)<0.003);
-  if(sa) h+=`<div class="line">三维覆盖最小编队：ρ=0.65 时 理想 ${sa.n_ideal} 架 ／ η=0.8 需 ${sa.n_eta} 架</div>`;
-  if(base) h+=`<div class="line">实测（ρ=0.65, n=6）：成功率 ${(base.success_rate*100).toFixed(0)}%，平均捕获 ${base.mean_capture_time.toFixed(0)}s，平均最小机间距 ${base.mean_min_sep.toFixed(1)}m</div>`;
-  h+=`<div class="hint">提示：引导层人工势场本身不保证 ≥10m 硬安全，实际系统需叠加执行层安全屏障。</div>`;
-  el.innerHTML=h;
-}
-function drawSucc(){
-  const c=$("ch-succ"),ctx=c.getContext("2d");const dpr=window.devicePixelRatio||1;
-  const w=c.clientWidth,h=c.clientHeight;c.width=w*dpr;c.height=h*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);
-  const pad=36;ctx.strokeStyle="#334155";ctx.font="11px sans-serif";ctx.fillStyle="#94a3b8";
-  ctx.strokeRect(pad,pad,w-2*pad,h-2*pad);
-  // axes
-  for(let s=0;s<=1;s+=0.25){ctx.fillText((s*100).toFixed(0)+"%",4,h-pad-s*(h-2*pad));ctx.beginPath();ctx.moveTo(pad,h-pad-s*(h-2*pad));ctx.lineTo(w-pad,h-pad-s*(h-2*pad));ctx.stroke();}
-  ctx.fillText("0.4",pad,h-2);ctx.fillText("0.85",w-pad-24,h-2);
-  const recs=(state.design&&state.design.records||[]).filter(r=>r.n_pursuers===state.n);
-  recs.sort((a,b)=>a.rho-b.rho);
-  ctx.beginPath();ctx.strokeStyle="#38bdf8";ctx.lineWidth=2;
-  recs.forEach((r,i)=>{const px=pad+(r.rho-0.4)/(0.85-0.4)*(w-2*pad);const py=h-pad-r.success_rate*(h-2*pad);i?ctx.lineTo(px,py):ctx.moveTo(px,py);});
-  ctx.stroke();
-  recs.forEach(r=>{const px=pad+(r.rho-0.4)/(0.85-0.4)*(w-2*pad);const py=h-pad-r.success_rate*(h-2*pad);ctx.beginPath();ctx.arc(px,py,3,0,7);ctx.fillStyle="#e2e8f0";ctx.fill();});
-  // current rho marker
-  const cx=pad+(state.rho-0.4)/(0.85-0.4)*(w-2*pad);
-  ctx.beginPath();ctx.moveTo(cx,h-pad);ctx.lineTo(cx,pad);ctx.strokeStyle="#f59e0b";ctx.setLineDash([3,3]);ctx.stroke();ctx.setLineDash([]);
-}
-function drawMin(){
-  const c=$("ch-min"),ctx=c.getContext("2d");const dpr=window.devicePixelRatio||1;
-  const w=c.clientWidth,h=c.clientHeight;c.width=w*dpr;c.height=h*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);
-  const pad=36;ctx.strokeStyle="#334155";ctx.font="11px sans-serif";ctx.fillStyle="#94a3b8";ctx.strokeRect(pad,pad,w-2*pad,h-2*pad);
-  const sa=(state.design&&state.design.solid_angle)||[];
-  const xmax=0.9,xmin=0.4,ymax=14,ymin=3;
-  for(let s=ymin;s<=ymax;s+=2){ctx.fillText(s,4,h-pad-(s-ymin)/(ymax-ymin)*(h-2*pad));ctx.beginPath();ctx.moveTo(pad,h-pad-(s-ymin)/(ymax-ymin)*(h-2*pad));ctx.lineTo(w-pad,h-pad-(s-ymin)/(ymax-ymin)*(h-2*pad));ctx.stroke();}
-  if(sa.length){
-    const plot=(key,col)=>{ctx.beginPath();ctx.strokeStyle=col;ctx.lineWidth=2;sa.forEach((r,i)=>{const px=pad+(r.rho-xmin)/(xmax-xmin)*(w-2*pad);const py=h-pad-(r.n-ymin)/(ymax-ymin)*(h-2*pad);i?ctx.lineTo(px,py):ctx.moveTo(px,py);});ctx.stroke();
-    sa.forEach(r=>{const px=pad+(r.rho-xmin)/(xmax-xmin)*(w-2*pad);const py=h-pad-(r.n-ymin)/(ymax-ymin)*(h-2*pad);ctx.beginPath();ctx.arc(px,py,2.5,0,7);ctx.fillStyle=col;ctx.fill();});};
-    plot("n_ideal","#38bdf8");plot("n_eta","#f59e0b");
-  }
-  ctx.fillStyle="#94a3b8";ctx.fillText("理想(蓝) / η=0.8(橙)",pad+6,pad+12);
-}
+function setVals(){ $("v-rho").textContent=(+$("rho").value).toFixed(2);$("v-n").textContent=$("n").value;$("v-seed").textContent=$("seed").value;state.rho=+$("rho").value;state.n=+$("n").value;state.seed=+$("seed").value;drawSucc();scheduleLayout(); }
+["rho","n","seed"].forEach(id=>$(id).addEventListener("input",setVals));
+let layoutTimer=null;function scheduleLayout(){if(layoutTimer)clearTimeout(layoutTimer);layoutTimer=setTimeout(loadLayout,70);}
+async function loadLayout(){try{const r=await fetch("/api/layout",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({rho:state.rho,n:state.n,seed:state.seed,dim:3})});const d=await r.json();state.layout={arena:d.arena,capture_radius:d.capture_radius,seed:d.seed,frame:{t:[0],evader:[d.evader_init],pursuers:[d.pursuers_init]}};state.showLayout=true;if(state.timer){clearInterval(state.timer);state.timer=null;state.playing=false;$("play").textContent="▶";}drawAnim();}catch(e){}}
+async function run(){$("run").disabled=true;try{const r=await fetch("/api/simulate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({rho:state.rho,n:state.n,seed:state.seed})});const d=await r.json();state.frames=d.frames;state.metrics=d;state.idx=0;state.showLayout=false;drawMetrics();startAnim();}catch(e){$("metrics").textContent="错误："+e;}$("run").disabled=false;}
+$("run").addEventListener("click",run);
+function drawMetrics(){const m=state.metrics;if(!m)return;const t=m.capture_time==null?"未捕获":m.capture_time.toFixed(1)+" s";$("metrics").innerHTML=`捕获：<b>${m.captured?"成功":"失败"}</b>｜捕获时间 <b>${t}</b><br>第二近距 <b>${m.best_second.toFixed(2)} m</b>｜机间最小间距 <b>${m.min_sep.toFixed(2)} m</b><br>到达序时方差 <b>${m.arrival_variance==null?"-":m.arrival_variance.toFixed(3)}</b>`;}
+function startAnim(){if(state.timer)clearInterval(state.timer);state.playing=true;$("play").textContent="⏸";state.timer=setInterval(()=>{state.idx+=1;if(state.idx>=state.frames.t.length-1){state.idx=state.frames.t.length-1;state.playing=false;$("play").textContent="▶";clearInterval(state.timer);}drawAnim();},30);}
+$("play").addEventListener("click",()=>{if(!state.frames)return;if(state.playing){state.playing=false;clearInterval(state.timer);$("play").textContent="▶";}else{if(state.idx>=state.frames.t.length-1)state.idx=0;startAnim();}});
+function drawSucc(){const c=$("ch-succ"),ctx=c.getContext("2d");const dpr=window.devicePixelRatio||1,w=c.clientWidth,h=c.clientHeight;c.width=w*dpr;c.height=h*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);const pad=34;ctx.strokeStyle="#334155";ctx.font="11px sans-serif";ctx.fillStyle="#94a3b8";ctx.strokeRect(pad,pad,w-2*pad,h-2*pad);for(let s=0;s<=1;s+=0.25){ctx.fillText((s*100).toFixed(0)+"%",2,h-pad-s*(h-2*pad));ctx.beginPath();ctx.moveTo(pad,h-pad-s*(h-2*pad));ctx.lineTo(w-pad,h-pad-s*(h-2*pad));ctx.stroke();}ctx.fillText("0.4",pad,h-2);ctx.fillText("0.85",w-pad-24,h-2);const recs=(state.design&&state.design.records||[]).filter(r=>r.n_pursuers===state.n).sort((a,b)=>a.rho-b.rho);ctx.beginPath();ctx.strokeStyle="#38bdf8";ctx.lineWidth=2;recs.forEach((r,i)=>{const px=pad+(r.rho-0.4)/0.45*(w-2*pad),py=h-pad-r.success_rate*(h-2*pad);i?ctx.lineTo(px,py):ctx.moveTo(px,py);});ctx.stroke();recs.forEach(r=>{const px=pad+(r.rho-0.4)/0.45*(w-2*pad),py=h-pad-r.success_rate*(h-2*pad);ctx.beginPath();ctx.arc(px,py,3,0,7);ctx.fillStyle="#e2e8f0";ctx.fill();});const cx=pad+(state.rho-0.4)/0.45*(w-2*pad);ctx.beginPath();ctx.moveTo(cx,h-pad);ctx.lineTo(cx,pad);ctx.strokeStyle="#f59e0b";ctx.setLineDash([3,3]);ctx.stroke();ctx.setLineDash([]);}
+function drawMin(){const c=$("ch-min"),ctx=c.getContext("2d");const dpr=window.devicePixelRatio||1,w=c.clientWidth,h=c.clientHeight;c.width=w*dpr;c.height=h*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);const pad=34,xmin=0.4,xmax=0.9,ymin=3,ymax=14;ctx.strokeStyle="#334155";ctx.font="11px sans-serif";ctx.fillStyle="#94a3b8";ctx.strokeRect(pad,pad,w-2*pad,h-2*pad);for(let s=ymin;s<=ymax;s+=2){ctx.fillText(s,2,h-pad-(s-ymin)/(ymax-ymin)*(h-2*pad));ctx.beginPath();ctx.moveTo(pad,h-pad-(s-ymin)/(ymax-ymin)*(h-2*pad));ctx.lineTo(w-pad,h-pad-(s-ymin)/(ymax-ymin)*(h-2*pad));ctx.stroke();}const sa=(state.design&&state.design.solid_angle)||[];const plot=(key,col)=>{ctx.beginPath();ctx.strokeStyle=col;ctx.lineWidth=2;sa.forEach((r,i)=>{const px=pad+(r.rho-xmin)/(xmax-xmin)*(w-2*pad),py=h-pad-(r.n-ymin)/(ymax-ymin)*(h-2*pad);i?ctx.lineTo(px,py):ctx.moveTo(px,py);});ctx.stroke();};plot("n_ideal","#38bdf8");plot("n_eta","#f59e0b");ctx.fillStyle="#94a3b8";ctx.fillText("理想(蓝) / η=0.8(橙)",pad+6,pad+12);}
+async function loadDesign(){try{const r=await fetch("/api/design");state.design=await r.json();}catch(e){}fillStatic();drawSucc();drawMin();}
+$("anim").addEventListener("mousedown",e=>{dragging={x:e.clientX,y:e.clientY};});addEventListener("mousemove",e=>{if(dragging){rotY+=(e.clientX-dragging.x)*0.01;rotX+=(e.clientY-dragging.y)*0.01;dragging={x:e.clientX,y:e.clientY};if(state.frames||state.layout)drawAnim();}});addEventListener("mouseup",()=>{dragging=null;});$("anim").addEventListener("wheel",e=>{e.preventDefault();zoom+=e.deltaY*-0.001;zoom=Math.max(0.3,Math.min(3,zoom));if(state.frames||state.layout)drawAnim();},{passive:false});
+function setView(v){view3d=v;$("vview").textContent=view3d?"三维":"俯视";if(state.frames||state.layout)drawAnim();}function setRot(v){autoRot=v;$("vrot").textContent=autoRot?"自旋":"手动";}
+$("vview").addEventListener("click",()=>setView(!view3d));$("vrot").addEventListener("click",()=>setRot(!autoRot));
 setVals();loadDesign();
-
-// 三维视角交互
-$("anim").addEventListener("mousedown",e=>{dragging={x:e.clientX,y:e.clientY};});
-addEventListener("mousemove",e=>{if(dragging){const dx=e.clientX-dragging.x,dy=e.clientY-dragging.y;rotY+=dx*0.01;rotX+=dy*0.01;dragging={x:e.clientX,y:e.clientY};if(state.frames)drawAnim();}});
-addEventListener("mouseup",()=>{dragging=null;});
-$("anim").addEventListener("wheel",e=>{e.preventDefault();zoom+=e.deltaY*-0.001;zoom=Math.max(0.3,Math.min(3,zoom));if(state.frames)drawAnim();},{passive:false});
-function setView(v){view3d=v;$("vview").textContent="视角："+(view3d?"三维":"俯视");if(state.frames)drawAnim();}
-function setRot(v){autoRot=v;$("vrot").textContent=(autoRot?"自动旋转：开":"自动旋转：关");}
-$("vview").addEventListener("click",()=>setView(!view3d));
-$("vrot").addEventListener("click",()=>setRot(!autoRot));
 </script>
 </body>
 </html>

@@ -15,6 +15,7 @@ ROOT = Path(__file__).resolve().parent
 INDEX = (ROOT / "index.html").read_text(encoding="utf-8")
 DESIGN_PATH = Path(__file__).resolve().parents[1] / "data" / "outputs" / "design_study" / "design_study.json"
 DESIGN = json.loads(DESIGN_PATH.read_text(encoding="utf-8")) if DESIGN_PATH.exists() else {"records": []}
+FIGS_DIR = Path(__file__).resolve().parents[1] / "data" / "outputs" / "design_study" / "figures"
 
 
 def run_sim(payload):
@@ -92,6 +93,14 @@ class Handler(BaseHTTPRequestHandler):
         path = urllib.parse.urlparse(self.path).path
         if path in ("/", "/index.html"):
             self._send(200, INDEX.encode("utf-8"), "text/html; charset=utf-8")
+        elif path.startswith("/figures/"):
+            name = path.rsplit("/", 1)[-1]
+            f = FIGS_DIR / name
+            if f.exists() and f.suffix.lower() in (".png", ".jpg", ".svg"):
+                ctype = "image/svg+xml" if f.suffix.lower() == ".svg" else "image/png"
+                self._send(200, f.read_bytes(), ctype)
+            else:
+                self._send(404, b'{"error":"figure not found"}')
         elif path == "/api/design":
             from aircraft_platform.analysis.interception.solidangle import min_formation_table
             payload = dict(DESIGN)
