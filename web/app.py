@@ -113,7 +113,7 @@ class Handler(BaseHTTPRequestHandler):
                 "t_window": 60.0,
                 "hard_safe": 10.0,
             }
-            self._send(200, json.dumps(payload, ensure_ascii=False).encode("utf-8"))
+            self._send(200, json.dumps(payload, ensure_ascii=False, allow_nan=False).encode("utf-8"))
         else:
             self._send(404, b'{"error":"not found"}')
 

@@ -1,0 +1,69 @@
+#!/usr/bin/env python
+"""构建 GitHub Pages 静态成果站：聚合设计数据 + 预计算若干典型算例回放。
+
+输出到 docs/（GitHub Pages 从 /docs 或根目录发布）：
+- docs/data/app.json   （KPI/表/建议/记录 + replays 回放数据）
+- docs/figures/*.png   （报告图，从 design_study 拷贝）
+"""
+import json
+import shutil
+from pathlib import Path
+
+import numpy as np
+
+from aircraft_platform.analysis.interception.config import InterceptionConfig
+from aircraft_platform.analysis.interception.simulator import simulate_trial
+from aircraft_platform.analysis.interception.solidangle import min_formation_table
+
+ROOT = Path(__file__).resolve().parents[1]
+SRC = ROOT / "data" / "outputs" / "design_study"
+DOCS = ROOT / "docs"
+FIGS = DOCS / "figures"
+DATA = DOCS / "data"
+FIGS.mkdir(parents=True, exist_ok=True)
+DATA.mkdir(parents=True, exist_ok=True)
+
+# 1) 聚合设计研究数据
+d = json.loads((SRC / "design_study.json").read_text(encoding="utf-8"))
+d["solid_angle"] = min_formation_table([0.45, 0.55, 0.65, 0.75, 0.85], r_cap=15.0, distance=80.0, eta=0.8)
+d["recommendation"] = d.get("optimum", {})
+d["criteria"] = {"target_success": 0.85, "t_window": 60.0, "hard_safe": 10.0}
+
+# 2) 预计算典型算例回放
+PRESETS = [
+    ("推荐设计", 0.65, 6, 1234),
+    ("低速度比", 0.45, 6, 1234),
+    ("高速度比", 0.85, 6, 1234),
+    ("少机编组", 0.65, 3, 1234),
+]
+replays = {}
+for name, rho, n, seed in PRESETS:
+    cfg = InterceptionConfig(rho=rho, n_pursuers=n, seed=seed, dim=3, scenario="patrol")
+    res = simulate_trial(cfg, seed=seed)
+    step = max(1, len(res.evader_traj) // 240)
+    idx = slice(None, None, step)
+    replays[name] = {
+        "rho": rho, "n": n, "seed": seed,
+        "captured": bool(res.captured),
+        "capture_time": res.capture_time,
+        "best_second": res.best_second_distance,
+        "min_sep": res.min_sep,
+        "arena": [cfg.xmin, cfg.xmax, cfg.ymin, cfg.ymax, cfg.zmin, cfg.zmax],
+        "capture_radius": cfg.capture_radius,
+        "frames": {
+            "t": [i * cfg.dt * step for i in range(len(np.asarray(res.evader_traj)[idx]))],
+            "evader": np.asarray(res.evader_traj)[idx].tolist(),
+            "pursuers": np.transpose(np.asarray(res.pursuer_traj)[idx], (0, 2, 1)).tolist(),
+        },
+    }
+d["replays"] = replays
+
+(DATA / "app.json").write_text(json.dumps(d, ensure_ascii=False, allow_nan=False), encoding="utf-8")
+
+# 3) 拷贝图
+for f in (SRC / "figures").glob("*.png"):
+    shutil.copy2(f, FIGS / f.name)
+
+print("static site data written:", DATA / "app.json", f"({(DATA/'app.json').stat().st_size} bytes)")
+print("replays:", list(replays.keys()))
+print("figures copied:", len(list(FIGS.glob('*.png'))))

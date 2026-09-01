@@ -1,12 +1,17 @@
 #!/usr/bin/env python
 """仅用已保存的设计研究数据，补充 交叉验证 与 成果摘要 到 design_study.json。"""
 import json
+import math
 from pathlib import Path
 from types import SimpleNamespace
 
 import numpy as np
 
-from aircraft_platform.analysis.interception.study import min_formation_for_success
+from aircraft_platform.analysis.interception.study import (
+    fit_surrogates,
+    min_formation_for_success,
+    surrogate_predict,
+)
 from aircraft_platform.analysis.interception.solidangle import min_formation_table
 
 P = Path("data/outputs/design_study/design_study.json")
@@ -50,6 +55,30 @@ summary = {
 }
 d["cross_validation"] = rows
 d["summary"] = summary
-P.write_text(json.dumps(d, ensure_ascii=False, indent=2), encoding="utf-8")
+
+# 用代理模型生成平滑的成功率-速度比预测曲线（供图表避免稀疏）
+models = fit_surrogates(recs)
+smodel = models["success_rate"]
+rhos = np.linspace(0.42, 0.88, 47)
+by_n = {}
+for n in (3, 6, 8):
+    pts = np.column_stack([rhos, np.full(rhos.shape, float(n))])
+    by_n[str(n)] = np.clip(surrogate_predict(smodel, pts), 0, 1).tolist()
+d["surrogate_curves"] = {"rhos": rhos.tolist(), "by_n": by_n}
+
+
+def _clean(o):
+    """递归把 NaN/inf 替换为 None，保证 JSON 合法（浏览器 JSON.parse 不接受 NaN）。"""
+    if isinstance(o, dict):
+        return {k: _clean(v) for k, v in o.items()}
+    if isinstance(o, list):
+        return [_clean(v) for v in o]
+    if isinstance(o, float) and (math.isnan(o) or math.isinf(o)):
+        return None
+    return o
+
+
+d = _clean(d)
+P.write_text(json.dumps(d, ensure_ascii=False, indent=2, allow_nan=False), encoding="utf-8")
 print("artifacts updated; summary keys:", list(summary.keys()))
 print("cross_validation:", rows)
