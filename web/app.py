@@ -142,8 +142,24 @@ class Handler(BaseHTTPRequestHandler):
 
 
 if __name__ == "__main__":
+    import os
+    import socket
     import sys
     sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-    port = 8000
-    print(f"智能协同反制分析平台 demo -> http://127.0.0.1:{port}")
-    ThreadingHTTPServer(("127.0.0.1", port), Handler).serve_forever()
+    host = os.environ.get("PLATFORM_HOST", "0.0.0.0")
+    port = int(os.environ.get("PLATFORM_PORT", "8000"))
+    print("智能协同反制分析平台（成果展示）")
+    print(f"  本机访问:   http://127.0.0.1:{port}")
+    try:
+        ips = sorted({
+            a for a in socket.gethostbyname_ex(socket.gethostname())[2]
+            if not a.startswith("127.")
+        })
+    except Exception:
+        ips = []
+    for ip in ips:
+        print(f"  局域网访问: http://{ip}:{port}   (发给同一网络的其他人)")
+    if not ips:
+        print("  (未能自动探测局域网 IP，可在 Windows 用 ipconfig 查看本机 IPv4)")
+    print("  如需公网访问，请用 cloudflared / ngrok 隧道 或 部署到公网主机。")
+    ThreadingHTTPServer((host, port), Handler).serve_forever()
