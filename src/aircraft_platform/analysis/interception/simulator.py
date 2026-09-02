@@ -82,6 +82,8 @@ def _spawn_scenario(cfg, rng):
     else:
         positions = _initial_positions(cfg, rng)
         evader = np.asarray(cfg.evader_init, dtype=float)
+        if evader.shape[0] < cfg.dim:
+            evader = np.concatenate([evader, np.zeros(cfg.dim - evader.shape[0])])
     heading = rng.uniform(-np.pi, np.pi)
     return positions, evader, heading
 

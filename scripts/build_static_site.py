@@ -31,19 +31,23 @@ d["criteria"] = {"target_success": 0.85, "t_window": 60.0, "hard_safe": 10.0}
 
 # 2) 预计算典型算例回放
 PRESETS = [
-    ("推荐设计", 0.65, 6, 7),
-    ("低速度比", 0.45, 6, 0),
-    ("高速度比", 0.85, 6, 67),
-    ("少机编组", 0.65, 3, 2),
+    {"name": "推荐设计", "rho": 0.65, "n": 6, "seed": 14, "scenario": "ring", "init_scale": 55},
+    {"name": "低速度比", "rho": 0.45, "n": 6, "seed": 0, "scenario": "patrol"},
+    {"name": "高速度比", "rho": 0.85, "n": 6, "seed": 67, "scenario": "patrol"},
+    {"name": "少机编组", "rho": 0.65, "n": 3, "seed": 2, "scenario": "patrol"},
 ]
 replays = {}
-for name, rho, n, seed in PRESETS:
-    cfg = InterceptionConfig(rho=rho, n_pursuers=n, seed=seed, dim=3, scenario="patrol")
-    res = simulate_trial(cfg, seed=seed)
+for p in PRESETS:
+    name = p["name"]
+    cfg = InterceptionConfig(
+        rho=p["rho"], n_pursuers=p["n"], seed=p["seed"], dim=3,
+        scenario=p["scenario"], init_scale=p.get("init_scale", 80.0),
+    )
+    res = simulate_trial(cfg, seed=p["seed"])
     step = max(1, len(res.evader_traj) // 240)
     idx = slice(None, None, step)
     replays[name] = {
-        "rho": rho, "n": n, "seed": seed,
+        "rho": p["rho"], "n": p["n"], "seed": p["seed"], "scenario": p["scenario"],
         "captured": bool(res.captured),
         "capture_time": res.capture_time,
         "best_second": res.best_second_distance,
