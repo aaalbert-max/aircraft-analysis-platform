@@ -147,7 +147,7 @@ if __name__ == "__main__":
     import sys
     sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
     host = os.environ.get("PLATFORM_HOST", "0.0.0.0")
-    port = int(os.environ.get("PLATFORM_PORT", "8000"))
+    port = int(os.environ.get("PORT") or os.environ.get("PLATFORM_PORT") or "8000")
     print("智能协同反制分析平台（成果展示）")
     print(f"  本机访问:   http://127.0.0.1:{port}")
     try:

@@ -1,0 +1,14 @@
+# Render Blueprint：把完整交互平台部署为 Web 服务（免费档有休眠/限额）
+services:
+  - type: web
+    name: aircraft-platform
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python web/app.py
+    healthCheckPath: /
+    envVars:
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: PORT
+        value: 10000
