@@ -75,6 +75,15 @@
   .resultbox.no .rhead{color:#f87171}
   .rmets{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--muted)}
   .rmets span b{color:var(--txt)}
+  .ctrl{margin-bottom:6px}
+  .srow{display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:12.5px;margin-bottom:4px}
+  .srow b{color:var(--acc);font-weight:700}
+  .side input[type=range]{width:100%;accent-color:var(--acc);margin-bottom:10px}
+  .subbtns{display:flex;gap:8px;margin-top:10px}
+  .subbtns button{flex:1;font-size:13px;padding:8px 4px}
+  .resultbox{border-left:3px solid var(--line)}
+  .resultbox.ok{border-left-color:#4ade80}
+  .resultbox.no{border-left-color:#f87171}
   @media(max-width:980px){.kpi{grid-template-columns:repeat(2,1fr)}.figgrid{grid-template-columns:1fr}.demo{grid-template-columns:1fr}.row2{grid-template-columns:1fr}}
 </style>
 </head>
@@ -146,35 +155,27 @@
   <h2>六、实时交互演示</h2>
   <div class="demo">
     <div class="side">
-      <div class="ptitle">参数配置</div>
-      <div class="sgroup">
-        <div class="slabel">速度比 <b class="badge" id="v-rho">0.65</b></div>
+      <div class="ctrl">
+        <div class="srow"><span>速度比 ρ</span><b id="v-rho">0.65</b></div>
         <input type="range" id="rho" min="0.40" max="0.85" step="0.01" value="0.65">
-      </div>
-      <div class="sgroup">
-        <div class="slabel">拦截机数量 <b class="badge" id="v-n">6</b></div>
+        <div class="srow"><span>拦截机数量</span><b id="v-n">6</b></div>
         <input type="range" id="n" min="3" max="10" step="1" value="6">
-      </div>
-      <div class="sgroup">
-        <div class="slabel">随机种子 <b class="badge" id="v-seed">1234</b></div>
+        <div class="srow"><span>随机种子</span><b id="v-seed">1234</b></div>
         <input type="range" id="seed" min="0" max="9999" step="1" value="1234">
       </div>
-      <div class="btnrow">
-        <button class="primary" id="run">▶ 运行仿真</button>
-        <button class="ghost" id="rand" title="随机更换场景">🎲 随机</button>
-      </div>
-      <div class="seg">
-        <button id="view3" class="sel">三维</button><button id="view2">俯视</button>
-      </div>
-      <div class="seg">
-          <button id="rotb">自旋：开</button><button id="play">⏸ 暂停</button><button id="speed1">速度 1×</button>
+      <button class="primary" id="run">▶ 运行仿真</button>
+      <div class="subbtns">
+        <button class="ghost" id="rand" title="随机场景">🎲</button>
+        <button class="ghost" id="play" title="播放/暂停">⏸</button>
+        <button class="ghost" id="view3" title="三维/俯视">三维</button>
+        <button class="ghost" id="speed1" title="倍速">1×</button>
       </div>
       <div class="resultbox" id="resultBox">
-        <div class="rhead" id="rhead">🎬 拖参数可预览初始布局，点击「运行仿真」播放围捕动画</div>
+        <div class="rhead" id="rhead">🎬 拖动参数可预览初始布局，点「运行仿真」播放围捕动画</div>
         <div class="rmets" id="rmets"></div>
       </div>
     </div>
-    <div class="main">
+      <div class="main">
       <div class="card"><h3>协同围捕过程（拖动旋转、滚轮缩放；绿圈=捕获半径；<b class="acc">琥珀色=拦截者</b>，红=目标，蓝=驱赶者）</h3><canvas id="anim"></canvas></div>
       <div class="row2">
         <div class="card"><h3>捕获成功率 - 速度比（当前 n）</h3><canvas class="ch" id="ch-succ"></canvas></div>
@@ -197,7 +198,7 @@
 <script>
 const $=id=>document.getElementById(id);
 let state={rho:0.65,n:6,seed:1234,frames:null,metrics:null,idx:0,playing:false,timer:null,design:null,showLayout:false,layout:null,speed:1};
-let view3d=true, rotY=0.65, rotX=0.30, zoom=1.0, dragging=null, autoRot=true;
+let view3d=true, rotY=0.0, rotX=0.32, zoom=1.0, dragging=null, autoRot=false;
 
 function pct(x){return x==null?"-":(x*100).toFixed(1)+"%";}
 function num(x,d){return x==null?"-":x.toFixed(d);}
@@ -255,10 +256,10 @@ function drawAnim3d(ctx,w,h,m,f,idx,lm){
   if(autoRot&&!dragging)rotY+=0.002;
   const a=m.arena,xmin=a[0],xmax=a[1],ymin=a[2],ymax=a[3],zmin=a[4],zmax=a[5],c=centerA(a);
   const corners=[[xmin,ymin,zmin],[xmax,ymin,zmin],[xmax,ymax,zmin],[xmin,ymax,zmin],[xmin,ymin,zmax],[xmax,ymin,zmax],[xmax,ymax,zmax],[xmin,ymax,zmax]];
-  const pr0=p=>{const r=rot3(p,c,rotY,rotX);return [w/2+r[0],h/2-r[1]];};
+  const pr0=p=>{const r=rot3(p,c,rotY,rotX);return [w/2+r[0],h/2+r[1]];};
   let mnX=1e9,mxX=-1e9,mnY=1e9,mxY=-1e9;corners.forEach(p=>{const q=pr0(p);mnX=Math.min(mnX,q[0]);mxX=Math.max(mxX,q[0]);mnY=Math.min(mnY,q[1]);mxY=Math.max(mxY,q[1]);});
   const s=zoom*Math.min((w-90)/Math.max(mxX-mnX,1),(h-90)/Math.max(mxY-mnY,1));
-  const pr=p=>{const r=rot3(p,c,rotY,rotX);return [w/2+r[0]*s,h/2-r[1]*s];};
+  const pr=p=>{const r=rot3(p,c,rotY,rotX);return [w/2+r[0]*s,h/2+r[1]*s];};
   ctx.strokeStyle="#334155";ctx.lineWidth=1;[[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]].forEach(e=>{const p=pr(corners[e[0]]),q=pr(corners[e[1]]);ctx.beginPath();ctx.moveTo(p[0],p[1]);ctx.lineTo(q[0],q[1]);ctx.stroke();});
   ctx.strokeStyle="rgba(148,163,184,.10)";ctx.lineWidth=1;
   for(let gx=xmin;gx<=xmax+1;gx+=(xmax-xmin)/6){const p=pr([gx,ymin,zmin]),q=pr([gx,ymax,zmin]);ctx.beginPath();ctx.moveTo(p[0],p[1]);ctx.lineTo(q[0],q[1]);ctx.stroke();}
@@ -302,13 +303,10 @@ function drawSucc(){const c=$("ch-succ"),ctx=c.getContext("2d");const dpr=window
 function drawMin(){const c=$("ch-min"),ctx=c.getContext("2d");const dpr=window.devicePixelRatio||1,w=c.clientWidth,h=c.clientHeight;c.width=w*dpr;c.height=h*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);const pad=34,xmin=0.4,xmax=0.9,ymin=3,ymax=14;ctx.strokeStyle="#334155";ctx.font="11px sans-serif";ctx.fillStyle="#94a3b8";ctx.strokeRect(pad,pad,w-2*pad,h-2*pad);for(let s=ymin;s<=ymax;s+=2){ctx.fillText(s,2,h-pad-(s-ymin)/(ymax-ymin)*(h-2*pad));ctx.beginPath();ctx.moveTo(pad,h-pad-(s-ymin)/(ymax-ymin)*(h-2*pad));ctx.lineTo(w-pad,h-pad-(s-ymin)/(ymax-ymin)*(h-2*pad));ctx.stroke();}const sa=(state.design&&state.design.solid_angle)||[];const plot=(key,col)=>{ctx.beginPath();ctx.strokeStyle=col;ctx.lineWidth=2;sa.forEach((r,i)=>{const px=pad+(r.rho-xmin)/(xmax-xmin)*(w-2*pad),py=h-pad-(r.n-ymin)/(ymax-ymin)*(h-2*pad);i?ctx.lineTo(px,py):ctx.moveTo(px,py);});ctx.stroke();};plot("n_ideal","#38bdf8");plot("n_eta","#f59e0b");ctx.fillStyle="#94a3b8";ctx.fillText("理想(蓝) / η=0.8(橙)",pad+6,pad+12);}
 async function loadDesign(){try{const r=await fetch("/api/design");state.design=await r.json();}catch(e){}fillStatic();drawSucc();drawMin();}
 $("anim").addEventListener("mousedown",e=>{dragging={x:e.clientX,y:e.clientY};});addEventListener("mousemove",e=>{if(dragging){rotY+=(e.clientX-dragging.x)*0.01;rotX+=(e.clientY-dragging.y)*0.01;dragging={x:e.clientX,y:e.clientY};if(state.frames||state.layout)drawAnim();}});addEventListener("mouseup",()=>{dragging=null;});$("anim").addEventListener("wheel",e=>{e.preventDefault();zoom+=e.deltaY*-0.001;zoom=Math.max(0.3,Math.min(3,zoom));if(state.frames||state.layout)drawAnim();},{passive:false});
-function setView(v){view3d=v;$("view3").classList.toggle("sel",v);$("view2").classList.toggle("sel",!v);if(state.frames||state.layout)drawAnim();}
-function setRot(v){autoRot=v;$("rotb").textContent=autoRot?"自旋：开":"自旋：关";}
-$("view3").addEventListener("click",()=>setView(true));
-$("view2").addEventListener("click",()=>setView(false));
-$("rotb").addEventListener("click",()=>setRot(!autoRot));
+function setView(v){view3d=v;$("view3").textContent=view3d?"三维":"俯视";if(state.frames||state.layout)drawAnim();}
+$("view3").addEventListener("click",()=>setView(!view3d));
 const spA=[1,2,0.5];let spI=0;
-$("speed1").addEventListener("click",()=>{spI=(spI+1)%spA.length;state.speed=spA[spI];$("speed1").textContent="速度 "+spA[spI]+"×";});
+$("speed1").addEventListener("click",()=>{spI=(spI+1)%spA.length;state.speed=spA[spI];$("speed1").textContent=spA[spI]+"×";});
 $("rand").addEventListener("click",()=>{const sv=2+Math.floor(Math.random()*9997);$("seed").value=sv;setVals();});
 setVals();loadDesign();
 </script>
