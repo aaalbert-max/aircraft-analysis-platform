@@ -31,7 +31,7 @@ d["criteria"] = {"target_success": 0.85, "t_window": 60.0, "hard_safe": 10.0}
 
 # 2) 预计算典型算例回放
 PRESETS = [
-    {"name": "推荐设计", "rho": 0.65, "n": 6, "seed": 14, "scenario": "ring", "init_scale": 55},
+    {"name": "推荐设计", "rho": 0.65, "n": 6, "seed": 38, "scenario": "ring", "init_scale": 55, "required_captors": 4},
     {"name": "低速度比", "rho": 0.45, "n": 6, "seed": 0, "scenario": "patrol"},
     {"name": "高速度比", "rho": 0.85, "n": 6, "seed": 67, "scenario": "patrol"},
     {"name": "少机编组", "rho": 0.65, "n": 3, "seed": 2, "scenario": "patrol"},
@@ -42,6 +42,7 @@ for p in PRESETS:
     cfg = InterceptionConfig(
         rho=p["rho"], n_pursuers=p["n"], seed=p["seed"], dim=3,
         scenario=p["scenario"], init_scale=p.get("init_scale", 80.0),
+        required_captors=p.get("required_captors", 2),
     )
     res = simulate_trial(cfg, seed=p["seed"])
     step = max(1, len(res.evader_traj) // 240)
